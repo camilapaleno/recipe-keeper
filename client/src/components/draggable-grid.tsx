@@ -36,6 +36,7 @@ export default function DraggableGrid({
 
   // Use useMemo to prevent infinite re-renders
   const gridItems = useMemo(() => {
+    console.log('Grid items memo - recipes:', recipes.length, 'stacks:', stacks.length);
     const freeRecipes = recipes.filter((recipe: Recipe) => !recipe.stackId);
     const items: GridItem[] = [
       ...freeRecipes.map((recipe: Recipe) => ({
@@ -53,6 +54,7 @@ export default function DraggableGrid({
     ];
     
     items.sort((a, b) => a.position - b.position);
+    console.log('Final grid items:', items);
     return items;
   }, [recipes, stacks]);
 
