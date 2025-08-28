@@ -8,6 +8,10 @@ interface RecipeCardProps {
 }
 
 export default function RecipeCard({ recipe, onClick, isDragDisabled }: RecipeCardProps) {
+  const handleDragClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent opening the recipe when dragging
+  };
+
   return (
     <div
       className="recipe-card"
@@ -16,7 +20,11 @@ export default function RecipeCard({ recipe, onClick, isDragDisabled }: RecipeCa
     >
       <div className="p-4 h-full flex flex-col">
         {!isDragDisabled && (
-          <div className="drag-handle" data-testid={`drag-handle-${recipe.id}`}>
+          <div 
+            className="drag-handle" 
+            data-testid={`drag-handle-${recipe.id}`}
+            onClick={handleDragClick}
+          >
             <GripVertical className="w-4 h-4" />
           </div>
         )}

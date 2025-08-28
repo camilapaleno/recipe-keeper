@@ -20,15 +20,21 @@ interface GridItem {
   position: number;
 }
 
+interface DragItem {
+  item: GridItem;
+  startIndex: number;
+}
+
 export default function DraggableGrid({
   onRecipeClick,
   onStackClick,
   expandedStack,
 }: DraggableGridProps) {
-  const { data: recipes = [] } = useRecipes();
-  const { data: stacks = [] } = useStacks();
+  const { data: recipes = [], updateRecipe } = useRecipes();
+  const { data: stacks = [], updateStack } = useStacks();
   const [gridItems, setGridItems] = useState<GridItem[]>([]);
   const [fanOutRecipes, setFanOutRecipes] = useState<Recipe[]>([]);
+  const [dragItem, setDragItem] = useState<DragItem | null>(null);
 
   // Combine recipes and stacks into grid items
   useEffect(() => {
@@ -72,6 +78,49 @@ export default function DraggableGrid({
     onStackClick(stack);
   };
 
+  const handleDragStart = (item: GridItem, index: number) => {
+    setDragItem({ item, startIndex: index });
+  };
+
+  const handleDragEnd = (item: GridItem, endIndex: number) => {
+    if (!dragItem || dragItem.startIndex === endIndex) {
+      setDragItem(null);
+      return;
+    }
+
+    // Update positions for all affected items
+    const newItems = [...gridItems];
+    const [draggedItem] = newItems.splice(dragItem.startIndex, 1);
+    newItems.splice(endIndex, 0, draggedItem);
+
+    // Update position values based on new order
+    const updatedItems = newItems.map((item, index) => ({
+      ...item,
+      position: index,
+    }));
+
+    setGridItems(updatedItems);
+
+    // Update backend with new positions
+    updatedItems.forEach((gridItem) => {
+      if (gridItem.type === 'recipe') {
+        const recipe = gridItem.data as Recipe;
+        updateRecipe.mutate({
+          id: recipe.id,
+          data: { ...recipe, position: gridItem.position },
+        });
+      } else {
+        const stack = gridItem.data as Stack;
+        updateStack.mutate({
+          id: stack.id,
+          data: { ...stack, position: gridItem.position },
+        });
+      }
+    });
+
+    setDragItem(null);
+  };
+
   // Show only items that exist, plus one empty slot if there are items
   const hasItems = gridItems.length > 0;
   const slotsToShow = hasItems ? gridItems.length + 1 : 1;
@@ -82,21 +131,44 @@ export default function DraggableGrid({
         {Array.from({ length: slotsToShow }, (_, index) => {
           const item = gridItems[index];
           return (
-            <div key={index} className="relative">
+            <motion.div 
+              key={item?.id || `empty-${index}`} 
+              className="relative"
+              layout
+              transition={{ duration: 0.3 }}
+            >
               {item ? (
-                item.type === 'recipe' ? (
-                  <RecipeCard
-                    recipe={item.data as Recipe}
-                    onClick={onRecipeClick}
-                  />
-                ) : (
-                  <StackCard
-                    stack={item.data as Stack}
-                    recipeCount={getRecipeCountForStack(item.id)}
-                    onClick={handleStackClick}
-                    isExpanded={expandedStack === item.id}
-                  />
-                )
+                <motion.div
+                  drag
+                  dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                  dragElastic={0.1}
+                  whileDrag={{ scale: 1.05, zIndex: 50 }}
+                  onDragStart={() => handleDragStart(item, index)}
+                  onDragEnd={(_, info) => {
+                    // Calculate drop position based on drag offset
+                    const draggedDistance = Math.abs(info.offset.x) + Math.abs(info.offset.y);
+                    if (draggedDistance > 50) {
+                      // Simple drop logic - you could enhance this
+                      const newIndex = Math.min(gridItems.length - 1, Math.max(0, index + Math.round(info.offset.x / 200)));
+                      handleDragEnd(item, newIndex);
+                    }
+                  }}
+                  className="cursor-grab active:cursor-grabbing"
+                >
+                  {item.type === 'recipe' ? (
+                    <RecipeCard
+                      recipe={item.data as Recipe}
+                      onClick={onRecipeClick}
+                    />
+                  ) : (
+                    <StackCard
+                      stack={item.data as Stack}
+                      recipeCount={getRecipeCountForStack(item.id)}
+                      onClick={handleStackClick}
+                      isExpanded={expandedStack === item.id}
+                    />
+                  )}
+                </motion.div>
               ) : (
                 <div className="recipe-card border-dashed border-2 border-border bg-muted/20">
                   <div className="p-4 h-full flex flex-col items-center justify-center text-muted-foreground">
@@ -105,7 +177,7 @@ export default function DraggableGrid({
                   </div>
                 </div>
               )}
-            </div>
+            </motion.div>
           );
         })}
       </div>
