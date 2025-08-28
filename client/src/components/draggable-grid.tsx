@@ -57,19 +57,7 @@ export default function DraggableGrid({
     ];
     
     items.sort((a, b) => a.position - b.position);
-    
-    // Only update if the items actually changed
-    setGridItems(prevItems => {
-      if (prevItems.length !== items.length) return items;
-      
-      const hasChanged = items.some((item, index) => 
-        !prevItems[index] || 
-        prevItems[index].id !== item.id || 
-        prevItems[index].position !== item.position
-      );
-      
-      return hasChanged ? items : prevItems;
-    });
+    setGridItems(items);
   }, [recipes, stacks]);
 
   // Handle stack expansion
@@ -150,23 +138,7 @@ export default function DraggableGrid({
               transition={{ duration: 0.3 }}
             >
               {item ? (
-                <motion.div
-                  drag
-                  dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                  dragElastic={0.1}
-                  whileDrag={{ scale: 1.05, zIndex: 50 }}
-                  onDragStart={() => handleDragStart(item, index)}
-                  onDragEnd={(_, info) => {
-                    // Calculate drop position based on drag offset
-                    const draggedDistance = Math.abs(info.offset.x) + Math.abs(info.offset.y);
-                    if (draggedDistance > 50) {
-                      // Simple drop logic - you could enhance this
-                      const newIndex = Math.min(gridItems.length - 1, Math.max(0, index + Math.round(info.offset.x / 200)));
-                      handleDragEnd(item, newIndex);
-                    }
-                  }}
-                  className="cursor-grab active:cursor-grabbing"
-                >
+                <div className="relative">
                   {item.type === 'recipe' ? (
                     <RecipeCard
                       recipe={item.data as Recipe}
@@ -180,7 +152,7 @@ export default function DraggableGrid({
                       isExpanded={expandedStack === item.id}
                     />
                   )}
-                </motion.div>
+                </div>
               ) : (
                 <div className="recipe-card border-dashed border-2 border-border bg-muted/20">
                   <div className="p-4 h-full flex flex-col items-center justify-center text-muted-foreground">
