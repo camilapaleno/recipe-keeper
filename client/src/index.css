@@ -143,6 +143,15 @@
     @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 
+  .drop-target {
+    @apply ring-2 ring-primary ring-opacity-60;
+  }
+  
+  .drop-target .stack-layer {
+    @apply border-primary;
+    background-color: hsl(var(--primary) / 0.1);
+  }
+
   .overlay {
     @apply fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center backdrop-blur-sm;
   }

@@ -33,6 +33,7 @@ export default function DraggableGrid({
   const { data: recipes = [], updateRecipe } = useRecipes();
   const { data: stacks = [], updateStack } = useStacks();
   const [dragItem, setDragItem] = useState<DragItem | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   // Use useMemo to prevent infinite re-renders
   const gridItems = useMemo(() => {
@@ -72,6 +73,35 @@ export default function DraggableGrid({
 
   const handleDragStart = (item: GridItem, index: number) => {
     setDragItem({ item, startIndex: index });
+  };
+
+  const handleDragEnter = (targetItem: GridItem) => {
+    // Only allow recipes to be dropped on stacks
+    if (dragItem?.item.type === 'recipe' && targetItem.type === 'stack') {
+      setDropTarget(targetItem.id);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDropTarget(null);
+  };
+
+  const handleDropOnStack = async (recipe: Recipe, stackId: string) => {
+    try {
+      await updateRecipe.mutateAsync({
+        id: recipe.id,
+        data: {
+          ...recipe,
+          stackId,
+        },
+      });
+      setDropTarget(null);
+      setDragItem(null);
+    } catch (error) {
+      console.error('Failed to add recipe to stack:', error);
+      setDropTarget(null);
+      setDragItem(null);
+    }
   };
 
   const handleDragEnd = async (item: GridItem, endIndex: number) => {
@@ -135,16 +165,30 @@ export default function DraggableGrid({
                     const draggedDistance = Math.abs(info.offset.x) + Math.abs(info.offset.y);
                     if (draggedDistance < 10) {
                       // Consider it a click, not a drag
+                      setDragItem(null);
+                      setDropTarget(null);
                       return;
                     }
+                    
+                    // Check if dropping recipe on stack
+                    if (dropTarget && dragItem?.item.type === 'recipe') {
+                      handleDropOnStack(dragItem.item.data as Recipe, dropTarget);
+                      return;
+                    }
+                    
                     // Simple reordering - move item based on horizontal drag
                     const dragDirection = info.offset.x > 50 ? 1 : info.offset.x < -50 ? -1 : 0;
                     if (dragDirection !== 0) {
                       const newIndex = Math.min(gridItems.length - 1, Math.max(0, index + dragDirection));
                       handleDragEnd(item, newIndex);
+                    } else {
+                      setDragItem(null);
+                      setDropTarget(null);
                     }
                   }}
                   className="cursor-grab active:cursor-grabbing"
+                  onPointerEnter={() => handleDragEnter(item)}
+                  onPointerLeave={() => handleDragLeave()}
                 >
                   {item.type === 'recipe' ? (
                     <RecipeCard
@@ -157,6 +201,7 @@ export default function DraggableGrid({
                       recipeCount={getRecipeCountForStack(item.id)}
                       onClick={handleStackClick}
                       isExpanded={expandedStack === item.id}
+                      isDropTarget={dropTarget === item.id}
                     />
                   )}
                 </motion.div>

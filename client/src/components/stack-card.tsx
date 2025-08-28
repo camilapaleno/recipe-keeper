@@ -9,9 +9,10 @@ interface StackCardProps {
   recipeCount: number;
   onClick: (stack: Stack) => void;
   isExpanded?: boolean;
+  isDropTarget?: boolean;
 }
 
-export default function StackCard({ stack, recipeCount, onClick, isExpanded }: StackCardProps) {
+export default function StackCard({ stack, recipeCount, onClick, isExpanded, isDropTarget }: StackCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(stack.name);
   const { updateStack } = useStacks();
@@ -51,7 +52,7 @@ export default function StackCard({ stack, recipeCount, onClick, isExpanded }: S
 
   return (
     <div
-      className="stack-card"
+      className={`stack-card ${isDropTarget ? 'drop-target' : ''}`}
       onClick={() => !isEditing && onClick(stack)}
       data-testid={`card-stack-${stack.id}`}
     >
