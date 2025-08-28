@@ -57,7 +57,19 @@ export default function DraggableGrid({
     ];
     
     items.sort((a, b) => a.position - b.position);
-    setGridItems(items);
+    
+    // Only update if the items actually changed
+    setGridItems(prevItems => {
+      if (prevItems.length !== items.length) return items;
+      
+      const hasChanged = items.some((item, index) => 
+        !prevItems[index] || 
+        prevItems[index].id !== item.id || 
+        prevItems[index].position !== item.position
+      );
+      
+      return hasChanged ? items : prevItems;
+    });
   }, [recipes, stacks]);
 
   // Handle stack expansion
