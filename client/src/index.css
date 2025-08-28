@@ -122,9 +122,9 @@
   }
 
   .stack-layer:nth-child(1) {
-    @apply z-[3];
-    transform: translateY(0px) translateX(0px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    @apply z-[1];
+    transform: translateY(-6px) translateX(-4px);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   }
 
   .stack-layer:nth-child(2) {
@@ -134,9 +134,9 @@
   }
 
   .stack-layer:nth-child(3) {
-    @apply z-[1];
-    transform: translateY(-6px) translateX(-4px);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    @apply z-[3];
+    transform: translateY(0px) translateX(0px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   .grid-container {

@@ -12,7 +12,6 @@ interface StackCardProps {
 }
 
 export default function StackCard({ stack, recipeCount, onClick, isExpanded }: StackCardProps) {
-  console.log('StackCard render:', stack.name, 'recipes:', recipeCount);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(stack.name);
   const { updateStack } = useStacks();
@@ -52,14 +51,13 @@ export default function StackCard({ stack, recipeCount, onClick, isExpanded }: S
 
   return (
     <div
-      className="stack-card bg-red-500 border-2 border-yellow-500"
+      className="stack-card"
       onClick={() => !isEditing && onClick(stack)}
       data-testid={`card-stack-${stack.id}`}
-      style={{ minHeight: '200px', width: '120px' }}
     >
-      <div className="stack-layer bg-blue-300"></div>
-      <div className="stack-layer bg-green-300"></div>
-      <div className="stack-layer bg-white">
+      <div className="stack-layer"></div>
+      <div className="stack-layer"></div>
+      <div className="stack-layer">
         <div className="p-4 h-full flex flex-col">
           <div className="flex justify-between items-start mb-2">
             <div 
@@ -106,23 +104,23 @@ export default function StackCard({ stack, recipeCount, onClick, isExpanded }: S
                 </button>
               </div>
             ) : (
-              <h3 className="font-semibold text-lg text-black" data-testid={`text-stack-name-${stack.id}`}>
+              <h3 className="font-semibold text-lg" data-testid={`text-stack-name-${stack.id}`}>
                 {stack.name}
               </h3>
             )}
           </div>
           
-          <p className="text-gray-600 text-sm flex-1" data-testid={`text-stack-description-${stack.id}`}>
+          <p className="text-muted-foreground text-sm flex-1" data-testid={`text-stack-description-${stack.id}`}>
             {stack.description}
           </p>
           
           <div className="mt-auto pt-2">
             {recipeCount === 0 ? (
-              <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded" data-testid={`text-empty-stack-${stack.id}`}>
+              <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded" data-testid={`text-empty-stack-${stack.id}`}>
                 Empty stack
               </span>
             ) : (
-              <span className="text-xs text-gray-500 bg-blue-200 px-2 py-1 rounded" data-testid={`text-recipe-count-${stack.id}`}>
+              <span className="text-xs text-muted-foreground bg-accent px-2 py-1 rounded" data-testid={`text-recipe-count-${stack.id}`}>
                 {recipeCount} {recipeCount === 1 ? 'recipe' : 'recipes'}
               </span>
             )}

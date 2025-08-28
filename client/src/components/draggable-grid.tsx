@@ -36,7 +36,6 @@ export default function DraggableGrid({
 
   // Use useMemo to prevent infinite re-renders
   const gridItems = useMemo(() => {
-    console.log('Grid items memo - recipes:', recipes.length, 'stacks:', stacks.length);
     const freeRecipes = recipes.filter((recipe: Recipe) => !recipe.stackId);
     const items: GridItem[] = [
       ...freeRecipes.map((recipe: Recipe) => ({
@@ -54,7 +53,6 @@ export default function DraggableGrid({
     ];
     
     items.sort((a, b) => a.position - b.position);
-    console.log('Final grid items:', items);
     return items;
   }, [recipes, stacks]);
 
@@ -76,13 +74,37 @@ export default function DraggableGrid({
     setDragItem({ item, startIndex: index });
   };
 
-  const handleDragEnd = (item: GridItem, endIndex: number) => {
+  const handleDragEnd = async (item: GridItem, endIndex: number) => {
     if (!dragItem || dragItem.startIndex === endIndex) {
       setDragItem(null);
       return;
     }
 
-    // For now, just reset drag state - we'll implement proper reordering later
+    // Update position based on new index
+    const newPosition = Date.now() % 100000000; // Keep positions manageable
+    
+    try {
+      if (item.type === 'recipe') {
+        await updateRecipe.mutateAsync({
+          id: item.id,
+          data: {
+            ...(item.data as Recipe),
+            position: newPosition,
+          },
+        });
+      } else {
+        await updateStack.mutateAsync({
+          id: item.id,
+          data: {
+            ...(item.data as Stack),
+            position: newPosition,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Failed to update position:', error);
+    }
+
     setDragItem(null);
   };
 
@@ -103,7 +125,27 @@ export default function DraggableGrid({
               transition={{ duration: 0.3 }}
             >
               {item ? (
-                <div>
+                <motion.div
+                  drag
+                  dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                  dragElastic={0.1}
+                  whileDrag={{ scale: 1.05, zIndex: 50 }}
+                  onDragStart={() => handleDragStart(item, index)}
+                  onDragEnd={(_, info) => {
+                    const draggedDistance = Math.abs(info.offset.x) + Math.abs(info.offset.y);
+                    if (draggedDistance < 10) {
+                      // Consider it a click, not a drag
+                      return;
+                    }
+                    // Simple reordering - move item based on horizontal drag
+                    const dragDirection = info.offset.x > 50 ? 1 : info.offset.x < -50 ? -1 : 0;
+                    if (dragDirection !== 0) {
+                      const newIndex = Math.min(gridItems.length - 1, Math.max(0, index + dragDirection));
+                      handleDragEnd(item, newIndex);
+                    }
+                  }}
+                  className="cursor-grab active:cursor-grabbing"
+                >
                   {item.type === 'recipe' ? (
                     <RecipeCard
                       recipe={item.data as Recipe}
@@ -117,7 +159,7 @@ export default function DraggableGrid({
                       isExpanded={expandedStack === item.id}
                     />
                   )}
-                </div>
+                </motion.div>
               ) : (
                 <div className="recipe-card border-dashed border-2 border-border bg-muted/20">
                   <div className="p-4 h-full flex flex-col items-center justify-center text-muted-foreground">
