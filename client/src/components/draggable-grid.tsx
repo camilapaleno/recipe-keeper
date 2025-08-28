@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
 import RecipeCard from "./recipe-card";
@@ -32,14 +32,11 @@ export default function DraggableGrid({
 }: DraggableGridProps) {
   const { data: recipes = [], updateRecipe } = useRecipes();
   const { data: stacks = [], updateStack } = useStacks();
-  const [gridItems, setGridItems] = useState<GridItem[]>([]);
   const [fanOutRecipes, setFanOutRecipes] = useState<Recipe[]>([]);
   const [dragItem, setDragItem] = useState<DragItem | null>(null);
 
-  // Combine recipes and stacks into grid items
-  useEffect(() => {
-    if (!recipes || !stacks) return;
-    
+  // Use useMemo to prevent infinite re-renders
+  const gridItems = useMemo(() => {
     const freeRecipes = recipes.filter((recipe: Recipe) => !recipe.stackId);
     const items: GridItem[] = [
       ...freeRecipes.map((recipe: Recipe) => ({
@@ -57,7 +54,7 @@ export default function DraggableGrid({
     ];
     
     items.sort((a, b) => a.position - b.position);
-    setGridItems(items);
+    return items;
   }, [recipes, stacks]);
 
   // Handle stack expansion
@@ -88,36 +85,7 @@ export default function DraggableGrid({
       return;
     }
 
-    // Update positions for all affected items
-    const newItems = [...gridItems];
-    const [draggedItem] = newItems.splice(dragItem.startIndex, 1);
-    newItems.splice(endIndex, 0, draggedItem);
-
-    // Update position values based on new order
-    const updatedItems = newItems.map((item, index) => ({
-      ...item,
-      position: index,
-    }));
-
-    setGridItems(updatedItems);
-
-    // Update backend with new positions
-    updatedItems.forEach((gridItem) => {
-      if (gridItem.type === 'recipe') {
-        const recipe = gridItem.data as Recipe;
-        updateRecipe.mutate({
-          id: recipe.id,
-          data: { ...recipe, position: gridItem.position },
-        });
-      } else {
-        const stack = gridItem.data as Stack;
-        updateStack.mutate({
-          id: stack.id,
-          data: { ...stack, position: gridItem.position },
-        });
-      }
-    });
-
+    // For now, just reset drag state - we'll implement proper reordering later
     setDragItem(null);
   };
 
@@ -138,7 +106,21 @@ export default function DraggableGrid({
               transition={{ duration: 0.3 }}
             >
               {item ? (
-                <div className="relative">
+                <motion.div
+                  drag
+                  dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                  dragElastic={0.1}
+                  whileDrag={{ scale: 1.05, zIndex: 50 }}
+                  onDragStart={() => handleDragStart(item, index)}
+                  onDragEnd={(_, info) => {
+                    const draggedDistance = Math.abs(info.offset.x) + Math.abs(info.offset.y);
+                    if (draggedDistance > 50) {
+                      const newIndex = Math.min(gridItems.length - 1, Math.max(0, index + Math.round(info.offset.x / 200)));
+                      handleDragEnd(item, newIndex);
+                    }
+                  }}
+                  className="cursor-pointer"
+                >
                   {item.type === 'recipe' ? (
                     <RecipeCard
                       recipe={item.data as Recipe}
@@ -152,7 +134,7 @@ export default function DraggableGrid({
                       isExpanded={expandedStack === item.id}
                     />
                   )}
-                </div>
+                </motion.div>
               ) : (
                 <div className="recipe-card border-dashed border-2 border-border bg-muted/20">
                   <div className="p-4 h-full flex flex-col items-center justify-center text-muted-foreground">
