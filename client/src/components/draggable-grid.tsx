@@ -32,6 +32,8 @@ export default function DraggableGrid({
 
   // Combine recipes and stacks into grid items
   useEffect(() => {
+    if (!recipes || !stacks) return;
+    
     const freeRecipes = recipes.filter((recipe: Recipe) => !recipe.stackId);
     const items: GridItem[] = [
       ...freeRecipes.map((recipe: Recipe) => ({

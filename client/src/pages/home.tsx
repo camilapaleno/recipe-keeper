@@ -26,7 +26,7 @@ export default function Home() {
     createStack.mutate({
       name: "New Stack",
       description: "A new recipe collection",
-      position: Date.now(),
+      position: Math.floor(Date.now() / 1000), // Convert to seconds to fit in integer
     });
   };
 
