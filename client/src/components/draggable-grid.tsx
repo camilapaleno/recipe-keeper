@@ -32,7 +32,6 @@ export default function DraggableGrid({
 }: DraggableGridProps) {
   const { data: recipes = [], updateRecipe } = useRecipes();
   const { data: stacks = [], updateStack } = useStacks();
-  const [fanOutRecipes, setFanOutRecipes] = useState<Recipe[]>([]);
   const [dragItem, setDragItem] = useState<DragItem | null>(null);
 
   // Use useMemo to prevent infinite re-renders
@@ -57,14 +56,10 @@ export default function DraggableGrid({
     return items;
   }, [recipes, stacks]);
 
-  // Handle stack expansion
-  useEffect(() => {
-    if (expandedStack) {
-      const stackRecipes = recipes.filter((recipe: Recipe) => recipe.stackId === expandedStack);
-      setFanOutRecipes(stackRecipes);
-    } else {
-      setFanOutRecipes([]);
-    }
+  // Use useMemo for fan-out recipes to avoid useEffect
+  const fanOutRecipes = useMemo(() => {
+    if (!expandedStack) return [];
+    return recipes.filter((recipe: Recipe) => recipe.stackId === expandedStack);
   }, [expandedStack, recipes]);
 
   const getRecipeCountForStack = (stackId: string) => {
@@ -106,21 +101,7 @@ export default function DraggableGrid({
               transition={{ duration: 0.3 }}
             >
               {item ? (
-                <motion.div
-                  drag
-                  dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                  dragElastic={0.1}
-                  whileDrag={{ scale: 1.05, zIndex: 50 }}
-                  onDragStart={() => handleDragStart(item, index)}
-                  onDragEnd={(_, info) => {
-                    const draggedDistance = Math.abs(info.offset.x) + Math.abs(info.offset.y);
-                    if (draggedDistance > 50) {
-                      const newIndex = Math.min(gridItems.length - 1, Math.max(0, index + Math.round(info.offset.x / 200)));
-                      handleDragEnd(item, newIndex);
-                    }
-                  }}
-                  className="cursor-pointer"
-                >
+                <div>
                   {item.type === 'recipe' ? (
                     <RecipeCard
                       recipe={item.data as Recipe}
@@ -134,7 +115,7 @@ export default function DraggableGrid({
                       isExpanded={expandedStack === item.id}
                     />
                   )}
-                </motion.div>
+                </div>
               ) : (
                 <div className="recipe-card border-dashed border-2 border-border bg-muted/20">
                   <div className="p-4 h-full flex flex-col items-center justify-center text-muted-foreground">
