@@ -65,7 +65,16 @@ export class MemStorage implements IStorage {
 
   async createRecipe(insertRecipe: InsertRecipe): Promise<Recipe> {
     const id = randomUUID();
-    const recipe: Recipe = { ...insertRecipe, id };
+    const recipe: Recipe = { 
+      ...insertRecipe, 
+      id,
+      description: insertRecipe.description || "",
+      category: insertRecipe.category || "",
+      ingredients: Array.isArray(insertRecipe.ingredients) ? insertRecipe.ingredients : [],
+      directions: insertRecipe.directions || "",
+      position: insertRecipe.position || 0,
+      stackId: insertRecipe.stackId || null
+    };
     this.recipes.set(id, recipe);
     return recipe;
   }
@@ -74,7 +83,11 @@ export class MemStorage implements IStorage {
     const existing = this.recipes.get(id);
     if (!existing) return undefined;
     
-    const updated: Recipe = { ...existing, ...updateData };
+    const updated: Recipe = { 
+      ...existing, 
+      ...updateData,
+      ingredients: Array.isArray(updateData.ingredients) ? updateData.ingredients : existing.ingredients,
+    };
     this.recipes.set(id, updated);
     return updated;
   }
@@ -94,7 +107,12 @@ export class MemStorage implements IStorage {
 
   async createStack(insertStack: InsertStack): Promise<Stack> {
     const id = randomUUID();
-    const stack: Stack = { ...insertStack, id };
+    const stack: Stack = { 
+      ...insertStack, 
+      id,
+      description: insertStack.description || "",
+      position: insertStack.position || 0
+    };
     this.stacks.set(id, stack);
     return stack;
   }
