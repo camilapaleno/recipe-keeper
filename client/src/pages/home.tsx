@@ -56,12 +56,12 @@ export default function Home() {
       <header className="py-16 px-4">
         <div className="text-center max-w-4xl mx-auto">
           <div className="mb-8">
-            <Bean className="w-16 h-16 mx-auto mb-6 text-foreground" />
+            <Bean className="w-12 h-12 mx-auto mb-6 text-foreground" />
           </div>
-          <h1 className="text-4xl font-normal text-foreground mb-4" data-testid="title-recipe-keeper">
+          <h1 className="text-2xl font-normal text-foreground mb-4" data-testid="title-recipe-keeper">
             recipe keeper
           </h1>
-          <p className="text-muted-foreground mb-8 text-lg">
+          <p className="text-muted-foreground mb-8 text-sm">
             add your recipes here to find them more easily
           </p>
           <div className="flex flex-wrap justify-center gap-4">
