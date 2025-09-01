@@ -10,7 +10,7 @@ const DEFAULT_RECIPES: Recipe[] = [
   {
     id: "seed-1",
     title: "Lemon Orzo Salad",
-    description: "",
+    description: "https://lemonsandzest.com/lemon-orzo-salad/",
     category: "A Classic",
     ingredients: [
       "2 c orzo, uncooked",
@@ -35,7 +35,7 @@ const DEFAULT_RECIPES: Recipe[] = [
   {
     id: "seed-2",
     title: "Cowboy Caviar",
-    description: "",
+    description: "https://www.allrecipes.com/ultimate-cowboy-caviar-recipe-8653312",
     category: "Fiber",
     ingredients: [
       "2/3 cup finely diced red onion",
@@ -56,7 +56,7 @@ const DEFAULT_RECIPES: Recipe[] = [
   {
     id: "seed-3",
     title: "Gigi Pasta",
-    description: "",
+    description: "https://thebigmansworld.com/gigi-hadid-pasta/",
     category: "Pasta",
     ingredients: [
       "1/4 cup olive oil (this is too much oil)",
@@ -125,7 +125,7 @@ const DEFAULT_RECIPES: Recipe[] = [
   {
     id: "seed-6",
     title: "Beef Udon Soup",
-    description: "",
+    description: "https://www.justonecookbook.com/beef-udon/",
     category: "",
     ingredients: [
       "2 cups dashi (2 cups water 1 tbsp dashi powder)",
