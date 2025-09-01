@@ -9,10 +9,9 @@ function generateUUID(): string {
 const DEFAULT_RECIPES: Recipe[] = [
   {
     id: "seed-1",
-    name: "Lemon Orzo Salad",
-    url: "https://lemonsandzest.com/lemon-orzo-salad/",
-    category: "A Classic",
+    title: "Lemon Orzo Salad",
     description: "",
+    category: "A Classic",
     ingredients: [
       "2 c orzo, uncooked",
       "1 tomato, chopped",
@@ -35,10 +34,9 @@ const DEFAULT_RECIPES: Recipe[] = [
   },
   {
     id: "seed-2",
-    name: "Cowboy Caviar",
-    url: "https://www.allrecipes.com/ultimate-cowboy-caviar-recipe-8653312",
-    category: "Fiber",
+    title: "Cowboy Caviar",
     description: "",
+    category: "Fiber",
     ingredients: [
       "2/3 cup finely diced red onion",
       "1 can black beans, drained and rinsed",
@@ -57,10 +55,9 @@ const DEFAULT_RECIPES: Recipe[] = [
   },
   {
     id: "seed-3",
-    name: "Gigi Pasta",
-    url: "https://thebigmansworld.com/gigi-hadid-pasta/",
-    category: "Pasta",
+    title: "Gigi Pasta",
     description: "",
+    category: "Pasta",
     ingredients: [
       "1/4 cup olive oil (this is too much oil)",
       "1 small red onion chopped",
@@ -82,10 +79,9 @@ const DEFAULT_RECIPES: Recipe[] = [
   },
   {
     id: "seed-4",
-    name: "Harvest Bowl",
-    url: "",
-    category: "Easy",
+    title: "Harvest Bowl",
     description: "So filling and healthy. Inspired by the harvest bowl at Sweetgreen.",
+    category: "Easy",
     ingredients: [
       "Broccoli",
       "Carrots",
@@ -104,10 +100,9 @@ const DEFAULT_RECIPES: Recipe[] = [
   },
   {
     id: "seed-5",
-    name: "Black-Eyed Pea Salad",
-    url: "",
-    category: "Turkish",
+    title: "Black-Eyed Pea Salad",
     description: "Ate this every morning at the hostel in Kas, Turkey",
+    category: "Turkish",
     ingredients: [
       "1 ½ cups cooked black-eyed peas (canned or homemade; drained/rinsed)",
       "1 medium onion, finely chopped",
@@ -129,10 +124,9 @@ const DEFAULT_RECIPES: Recipe[] = [
   },
   {
     id: "seed-6",
-    name: "Beef Udon Soup",
-    url: "https://www.justonecookbook.com/beef-udon/",
-    category: "",
+    title: "Beef Udon Soup",
     description: "",
+    category: "",
     ingredients: [
       "2 cups dashi (2 cups water 1 tbsp dashi powder)",
       "1½ Tbsp soy sauce",
