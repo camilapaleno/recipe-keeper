@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { createServer } from "http";
 
 const app = express();
 app.use(express.json());
@@ -56,16 +57,41 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  // Function to find an available port
+  const findAvailablePort = (startPort: number): Promise<number> => {
+    return new Promise((resolve, reject) => {
+      const testServer = createServer();
+      testServer.listen(startPort, '0.0.0.0', () => {
+        const actualPort = (testServer.address() as any)?.port;
+        testServer.close(() => resolve(actualPort));
+      });
+      testServer.on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE') {
+          findAvailablePort(startPort + 1).then(resolve).catch(reject);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  };
+
+  // Start with the preferred port from environment variable or default to 5000
+  const preferredPort = parseInt(process.env.PORT || '5000', 10);
+  
+  try {
+    const availablePort = await findAvailablePort(preferredPort);
+    server.listen({
+      port: availablePort,
+      host: "0.0.0.0",
+    }, () => {
+      if (availablePort !== preferredPort) {
+        log(`Port ${preferredPort} was in use, serving on port ${availablePort} instead`);
+      } else {
+        log(`serving on port ${availablePort}`);
+      }
+    });
+  } catch (error) {
+    log(`Failed to find an available port: ${error}`);
+    process.exit(1);
+  }
 })();

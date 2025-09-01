@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Keeper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    border: "var(--border)",
+                    ring: "var(--ring)",
+                },
+                fontFamily: {
+                    sans: ["Inter", "system-ui", "sans-serif"],
+                    serif: ["Georgia", "serif"],
+                },
+                aspectRatio: {
+                    'recipe': '3 / 5',
+                }
+            },
+        }
+    };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --background: hsl(48 20% 98%);
+            --foreground: hsl(20 14.3% 4.1%);
+            --card: hsl(48 15% 96%);
+            --card-foreground: hsl(20 14.3% 4.1%);
+            --primary: hsl(24 50% 55%);
+            --primary-foreground: hsl(60 9.1% 97.8%);
+            --secondary: hsl(60 4.8% 95.9%);
+            --secondary-foreground: hsl(24 9.8% 10%);
+            --muted: hsl(60 4.8% 95.9%);
+            --muted-foreground: hsl(25 5.3% 44.7%);
+            --accent: hsl(38 60% 75%);
+            --accent-foreground: hsl(24 9.8% 10%);
+            --border: hsl(20 5.9% 90%);
+            --ring: hsl(24 50% 55%);
+            --radius: 0.75rem;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--background);
+            color: var(--foreground);
+        }
+
+        .paper-texture {
+            background-image: 
+                radial-gradient(circle at 20px 50px, rgba(120,119,108,0.02) 1px, transparent 1px),
+                radial-gradient(circle at 40px 80px, rgba(120,119,108,0.02) 1px, transparent 1px),
+                radial-gradient(circle at 90px 40px, rgba(120,119,108,0.02) 1px, transparent 1px);
+            background-size: 100px 100px;
+        }
+
+        .recipe-card {
+            aspect-ratio: 3 / 5;
+            background: linear-gradient(135deg, hsl(48 15% 98%) 0%, hsl(48 15% 96%) 100%);
+            border: 1px solid hsl(20 5.9% 90%);
+            box-shadow: 
+                0 2px 4px rgba(0,0,0,0.05),
+                0 8px 16px rgba(0,0,0,0.03);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 4px 8px rgba(0,0,0,0.08),
+                0 12px 24px rgba(0,0,0,0.06);
+        }
+
+        .recipe-card:active {
+            transform: translateY(0);
+        }
+
+        .stack-card {
+            aspect-ratio: 3 / 5;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stack-layer {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, hsl(48 15% 98%) 0%, hsl(48 15% 96%) 100%);
+            border: 1px solid hsl(20 5.9% 90%);
+            border-radius: calc(var(--radius) - 2px);
+            transition: all 0.3s ease;
+        }
+
+        .stack-layer:nth-child(1) {
+            transform: translate(0px, 0px);
+            z-index: 3;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .stack-layer:nth-child(2) {
+            transform: translate(-3px, -3px) rotate(-1deg);
+            z-index: 2;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        .stack-layer:nth-child(3) {
+            transform: translate(-6px, -6px) rotate(0.5deg);
+            z-index: 1;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+
+        .stack-card:hover .stack-layer:nth-child(1) {
+            transform: translate(2px, -2px) rotate(1deg);
+        }
+
+        .stack-card:hover .stack-layer:nth-child(2) {
+            transform: translate(-5px, -5px) rotate(-2deg);
+        }
+
+        .stack-card:hover .stack-layer:nth-child(3) {
+            transform: translate(-8px, -8px) rotate(1.5deg);
+        }
+
+        .stack-expanded .contained-recipe {
+            position: absolute;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stack-expanded .contained-recipe:nth-child(1) {
+            transform: translate(-120px, -80px) rotate(-10deg);
+            z-index: 10;
+        }
+
+        .stack-expanded .contained-recipe:nth-child(2) {
+            transform: translate(120px, -60px) rotate(8deg);
+            z-index: 9;
+        }
+
+        .stack-expanded .contained-recipe:nth-child(3) {
+            transform: translate(-80px, 100px) rotate(-5deg);
+            z-index: 8;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .drag-handle {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            cursor: grab;
+            color: var(--muted-foreground);
+        }
+
+        .recipe-card:hover .drag-handle,
+        .stack-card:hover .drag-handle {
+            opacity: 1;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .full-screen-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .full-screen-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .full-screen-card {
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            background: linear-gradient(135deg, hsl(48 15% 98%) 0%, hsl(48 15% 96%) 100%);
+            border-radius: var(--radius);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .full-screen-overlay.active .full-screen-card {
+            transform: scale(1);
+        }
+
+        .ingredient-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0;
+            transition: all 0.2s ease;
+        }
+
+        .ingredient-item:hover {
+            background: rgba(0,0,0,0.02);
+            border-radius: 4px;
+            padding-left: 0.5rem;
+            margin-left: -0.5rem;
+            padding-right: 0.5rem;
+            margin-right: -0.5rem;
+        }
+
+        .ingredient-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .ingredient-checkbox.checked {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .ingredient-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--primary-foreground);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            background: hsl(24 50% 50%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: var(--secondary-foreground);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: calc(var(--radius) - 2px);
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent);
+            border-color: hsl(20 5.9% 80%);
+        }
+
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen paper-texture">
+    <!-- @COMPONENT: Header -->
+    <header class="text-center py-8 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40">
+        <h1 class="text-4xl font-bold text-foreground mb-6 font-serif">Recipe Keeper</h1>
+        <div class="flex justify-center gap-4">
+            <button class="btn-primary" data-event="click:createNewRecipe">
+                <i class="fas fa-plus"></i>
+                New Recipe
+            </button>
+            <button class="btn-primary" data-event="click:createNewStack">
+                <i class="fas fa-layer-group"></i>
+                New Stack
+            </button>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <!-- @COMPONENT: RecipeGrid -->
+    <main class="py-8">
+        <div class="grid-container">
+            <!-- @STATE: recipes:Recipe[] = [] -->
+            <!-- @STATE: stacks:Stack[] = [] -->
+            <!-- @STATE: selectedItem:Recipe|Stack|null = null -->
+            
+            <!-- Sample Recipe Cards -->
+            <!-- @MAP: recipes.map((recipe, index) => ( -->
+            <!-- @COMPONENT: RecipeCard [recipe, index, onEdit, onDrag] -->
+            <div class="recipe-card paper-texture" data-bind="recipe.id" data-mock="true">
+                <div class="drag-handle">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+                <!-- A close-up photo of a golden, crispy grilled cheese sandwich cut diagonally -->
+                <img 
+                    src="https://images.unsplash.com/photo-1528735602780-2552fd46c7af?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=500" 
+                    alt="Grilled cheese sandwich" 
+                    class="w-full h-32 object-cover"
+                    data-mock-image="true"
+                />
+                <div class="p-4 h-full flex flex-col">
+                    <h3 class="font-semibold text-lg mb-2 text-foreground" data-bind="recipe.title">Classic Grilled Cheese</h3>
+                    <p class="text-sm text-muted-foreground flex-1" data-bind="recipe.description">
+                        Perfect golden-brown grilled cheese with melted cheddar and crispy buttered bread...
+                    </p>
+                    <div class="mt-auto pt-3 flex justify-between items-center">
+                        <span class="text-xs text-muted-foreground" data-bind="recipe.cookTime">15 min</span>
+                        <button class="btn-secondary text-xs" data-event="click:editRecipe">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: RecipeCard -->
+
+            <!-- Sample Stack Card -->
+            <!-- @COMPONENT: StackCard [stack, onExpand, onEdit] -->
+            <div class="stack-card" data-bind="stack.id" data-mock="true">
+                <div class="drag-handle">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+                <div class="stack-layer"></div>
+                <div class="stack-layer"></div>
+                <div class="stack-layer flex items-end">
+                    <div class="p-4 w-full">
+                        <h3 class="font-semibold text-lg text-foreground" data-bind="stack.name">Breakfast</h3>
+                        <p class="text-sm text-muted-foreground" data-bind="stack.count">3 recipes</p>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: StackCard -->
+
+            <!-- Additional Sample Recipe Cards -->
+            <div class="recipe-card paper-texture" data-mock="true">
+                <div class="drag-handle">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+                <!-- A vibrant bowl of fresh Caesar salad with crisp romaine lettuce and parmesan -->
+                <img 
+                    src="https://images.unsplash.com/photo-1550304943-4f24f54ddde9?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=500" 
+                    alt="Caesar salad" 
+                    class="w-full h-32 object-cover"
+                />
+                <div class="p-4 h-full flex flex-col">
+                    <h3 class="font-semibold text-lg mb-2 text-foreground">Caesar Salad</h3>
+                    <p class="text-sm text-muted-foreground flex-1">
+                        Fresh romaine lettuce tossed with homemade caesar dressing, parmesan...
+                    </p>
+                    <div class="mt-auto pt-3 flex justify-between items-center">
+                        <span class="text-xs text-muted-foreground">20 min</span>
+                        <button class="btn-secondary text-xs">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recipe-card paper-texture" data-mock="true">
+                <div class="drag-handle">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+                <!-- A steaming bowl of rich, homemade tomato soup with herbs floating on top -->
+                <img 
+                    src="https://images.unsplash.com/photo-1570197788417-0e82375c9371?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=500" 
+                    alt="Tomato soup" 
+                    class="w-full h-32 object-cover"
+                />
+                <div class="p-4 h-full flex flex-col">
+                    <h3 class="font-semibold text-lg mb-2 text-foreground">Tomato Basil Soup</h3>
+                    <p class="text-sm text-muted-foreground flex-1">
+                        Rich and creamy tomato soup with fresh basil and a hint of garlic...
+                    </p>
+                    <div class="mt-auto pt-3 flex justify-between items-center">
+                        <span class="text-xs text-muted-foreground">45 min</span>
+                        <button class="btn-secondary text-xs">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Another Stack Card -->
+            <div class="stack-card" data-mock="true">
+                <div class="drag-handle">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+                <div class="stack-layer"></div>
+                <div class="stack-layer"></div>
+                <div class="stack-layer flex items-end">
+                    <div class="p-4 w-full">
+                        <h3 class="font-semibold text-lg text-foreground">Dinner</h3>
+                        <p class="text-sm text-muted-foreground">5 recipes</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recipe-card paper-texture" data-mock="true">
+                <div class="drag-handle">
+                    <i class="fas fa-grip-vertical"></i>
+                </div>
+                <!-- A perfectly baked chocolate chip cookie with melted chocolate chips visible -->
+                <img 
+                    src="https://images.unsplash.com/photo-1558961363-fa8fdf82db35?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=500" 
+                    alt="Chocolate chip cookies" 
+                    class="w-full h-32 object-cover"
+                />
+                <div class="p-4 h-full flex flex-col">
+                    <h3 class="font-semibold text-lg mb-2 text-foreground">Chocolate Chip Cookies</h3>
+                    <p class="text-sm text-muted-foreground flex-1">
+                        Soft and chewy chocolate chip cookies with the perfect balance of sweetness...
+                    </p>
+                    <div class="mt-auto pt-3 flex justify-between items-center">
+                        <span class="text-xs text-muted-foreground">30 min</span>
+                        <button class="btn-secondary text-xs">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty slots to show full 5x5 grid -->
+            <div class="recipe-card border-2 border-dashed border-border bg-muted/30 flex items-center justify-center opacity-50 hover:opacity-100 cursor-pointer transition-opacity" data-mock="true">
+                <div class="text-center text-muted-foreground">
+                    <i class="fas fa-plus text-2xl mb-2"></i>
+                    <p class="text-sm">Add Recipe</p>
+                </div>
+            </div>
+
+            <!-- Fill remaining grid slots -->
+            <div class="aspect-recipe opacity-30" data-mock="true"></div>
+            <div class="aspect-recipe opacity-30" data-mock="true"></div>
+            <div class="aspect-recipe opacity-30" data-mock="true"></div>
+            <!-- ... and so on for remaining slots -->
+
+            <!-- @END_MAP )) -->
+        </div>
+    </main>
+    <!-- @END_COMPONENT: RecipeGrid -->
+
+    <!-- @COMPONENT: FullScreenRecipeOverlay [recipe, isOpen, onClose, onSave] -->
+    <!-- Full Screen Recipe Card Overlay -->
+    <div class="full-screen-overlay active" id="recipeOverlay" data-mock="true">
+        <div class="full-screen-card paper-texture">
+            <div class="flex justify-between items-center p-6 border-b border-border">
+                <h2 class="text-2xl font-bold text-foreground font-serif">Classic Grilled Cheese</h2>
+                <div class="flex gap-2">
+                    <button class="btn-secondary" data-event="click:toggleEditMode">
+                        <i class="fas fa-edit"></i>
+                        Edit
+                    </button>
+                    <button class="btn-secondary" data-event="click:closeOverlay">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                <!-- Recipe Image -->
+                <div class="mb-6">
+                    <!-- A close-up photo of a golden, crispy grilled cheese sandwich cut diagonally with melted cheese oozing -->
+                    <img 
+                        src="https://images.unsplash.com/photo-1528735602780-2552fd46c7af?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=300" 
+                        alt="Grilled cheese sandwich" 
+                        class="w-full h-48 object-cover rounded-lg shadow-md"
+                    />
+                </div>
+
+                <!-- Recipe Description -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-foreground">Description</h3>
+                    <textarea 
+                        class="w-full p-4 border border-border rounded-lg resize-none bg-background text-foreground" 
+                        rows="3" 
+                        readonly
+                        data-bind="recipe.description"
+                        data-mock="true"
+                    >The perfect comfort food! This classic grilled cheese sandwich features golden, buttery bread with melted cheddar cheese. Simple ingredients come together to create something truly satisfying.</textarea>
+                </div>
+
+                <!-- Ingredients List -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-foreground">Ingredients</h3>
+                    <div class="space-y-2" data-bind="recipe.ingredients">
+                        <!-- @MAP: recipe.ingredients.map(ingredient => ( -->
+                        <div class="ingredient-item" data-mock="true">
+                            <div class="ingredient-checkbox" data-event="click:toggleIngredient"></div>
+                            <span class="text-foreground">2 slices of bread</span>
+                        </div>
+                        <div class="ingredient-item" data-mock="true">
+                            <div class="ingredient-checkbox checked"></div>
+                            <span class="text-foreground line-through text-muted-foreground">2 slices cheddar cheese</span>
+                        </div>
+                        <div class="ingredient-item" data-mock="true">
+                            <div class="ingredient-checkbox"></div>
+                            <span class="text-foreground">2 tbsp butter</span>
+                        </div>
+                        <div class="ingredient-item" data-mock="true">
+                            <div class="ingredient-checkbox"></div>
+                            <span class="text-foreground">Salt and pepper to taste</span>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+
+                <!-- Directions -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-foreground">Directions</h3>
+                    <textarea 
+                        class="w-full p-4 border border-border rounded-lg resize-none bg-background text-foreground h-32" 
+                        readonly
+                        data-bind="recipe.directions"
+                        data-mock="true"
+                    >1. Heat a skillet over medium heat
+2. Butter one side of each slice of bread
+3. Place cheese between unbuttered sides of bread
+4. Cook for 2-3 minutes until golden brown
+5. Flip and cook another 2-3 minutes until cheese is melted
+6. Serve hot and enjoy!</textarea>
+                </div>
+
+                <!-- Cook Time and Servings -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-1">Cook Time</label>
+                        <input 
+                            type="text" 
+                            class="w-full p-2 border border-border rounded bg-background text-foreground" 
+                            value="15 minutes" 
+                            readonly
+                            data-bind="recipe.cookTime"
+                        />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-foreground mb-1">Servings</label>
+                        <input 
+                            type="text" 
+                            class="w-full p-2 border border-border rounded bg-background text-foreground" 
+                            value="1" 
+                            readonly
+                            data-bind="recipe.servings"
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: FullScreenRecipeOverlay -->
+
+    <script>
+        // TODO: Implement React state management, drag-and-drop functionality, and data persistence
+        
+        // Mock interactions for demonstration
+        (function() {
+            // Close overlay functionality
+            const overlay = document.getElementById('recipeOverlay');
+            const recipeCards = document.querySelectorAll('.recipe-card');
+            
+            // Mock: Close overlay when clicking background or close button
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay || e.target.closest('[data-event="click:closeOverlay"]')) {
+                    overlay.classList.remove('active');
+                }
+            });
+
+            // Mock: Open overlay when clicking recipe cards
+            recipeCards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    if (!e.target.closest('.drag-handle') && !e.target.closest('button')) {
+                        overlay.classList.add('active');
+                    }
+                });
+            });
+
+            // Mock: Ingredient checkbox toggle
+            const checkboxes = document.querySelectorAll('.ingredient-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('click', function() {
+                    this.classList.toggle('checked');
+                    const text = this.nextElementSibling;
+                    if (this.classList.contains('checked')) {
+                        text.classList.add('line-through', 'text-muted-foreground');
+                    } else {
+                        text.classList.remove('line-through', 'text-muted-foreground');
+                        text.classList.add('text-foreground');
+                    }
+                });
+            });
+
+            // Mock: Stack card expansion animation
+            const stackCards = document.querySelectorAll('.stack-card');
+            stackCards.forEach(stack => {
+                stack.addEventListener('click', function(e) {
+                    if (!e.target.closest('.drag-handle')) {
+                        // TODO: Implement fan-out animation for stack contents
+                        console.log('Stack clicked - implement fan-out animation');
+                        this.classList.toggle('stack-expanded');
+                    }
+                });
+            });
+
+            // Mock: Edit mode toggle
+            const editButtons = document.querySelectorAll('[data-event="click:toggleEditMode"]');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const card = this.closest('.full-screen-card');
+                    const textareas = card.querySelectorAll('textarea');
+                    const inputs = card.querySelectorAll('input');
+                    
+                    textareas.forEach(textarea => {
+                        textarea.readOnly = !textarea.readOnly;
+                        textarea.classList.toggle('bg-accent/20');
+                    });
+                    
+                    inputs.forEach(input => {
+                        input.readOnly = !input.readOnly;
+                        input.classList.toggle('bg-accent/20');
+                    });
+                    
+                    this.innerHTML = textarea.readOnly ? 
+                        '<i class="fas fa-edit"></i> Edit' : 
+                        '<i class="fas fa-save"></i> Save';
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -12,6 +12,7 @@ import { useRecipes } from "@/hooks/use-recipes";
 import { useToast } from "@/hooks/use-toast";
 import type { Recipe } from "@shared/schema";
 import { z } from "zod";
+import { getNextColor, RECIPE_COLORS } from "@/lib/colors";
 
 interface RecipeModalProps {
   recipe: Recipe | null;
@@ -23,6 +24,7 @@ interface RecipeModalProps {
 
 const recipeFormSchema = insertRecipeSchema.extend({
   ingredientsText: z.string(),
+  color: z.string().optional(),
 });
 
 type RecipeFormData = z.infer<typeof recipeFormSchema>;
@@ -35,7 +37,7 @@ export default function RecipeModal({
   onEditModeChange,
 }: RecipeModalProps) {
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
-  const { updateRecipe, deleteRecipe, createRecipe } = useRecipes();
+  const { updateRecipe, deleteRecipe, createRecipe, data: allRecipes = [] } = useRecipes();
   const { toast } = useToast();
 
   const form = useForm<RecipeFormData>({
@@ -48,6 +50,8 @@ export default function RecipeModal({
       directions: "",
       position: Math.floor(Date.now() / 1000),
       stackId: null,
+      image: "",
+      color: getNextColor(allRecipes),
     },
   });
 
@@ -61,6 +65,8 @@ export default function RecipeModal({
         directions: recipe.directions,
         position: recipe.position,
         stackId: recipe.stackId,
+        image: recipe.image || "",
+        color: recipe.color || getNextColor(allRecipes),
       });
       setCheckedIngredients(new Set());
     } else {
@@ -72,6 +78,8 @@ export default function RecipeModal({
         directions: "",
         position: Math.floor(Date.now() / 1000),
         stackId: null,
+        image: "",
+        color: getNextColor(allRecipes),
       });
     }
   }, [recipe, form]);
@@ -85,6 +93,7 @@ export default function RecipeModal({
     const recipeData = {
       ...data,
       ingredients,
+      color: data.color || getNextColor(allRecipes),
     };
     delete (recipeData as any).ingredientsText;
 
@@ -157,7 +166,7 @@ export default function RecipeModal({
                   Edit
                 </Button>
               )}
-              {isEditMode && (
+              {isEditMode && recipe && (
                 <Button
                   variant="secondary"
                   onClick={() => onEditModeChange(false)}
@@ -277,6 +286,58 @@ export default function RecipeModal({
               ) : (
                 <div className="mt-2 text-muted-foreground leading-relaxed whitespace-pre-line" data-testid="text-recipe-directions">
                   {recipe?.directions || "No directions provided"}
+                </div>
+              )}
+            </div>
+
+            {/* Color */}
+            <div>
+              <Label className="text-lg font-semibold">Color</Label>
+              {isEditMode ? (
+                <div className="mt-3 flex gap-3">
+                  {RECIPE_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => form.setValue("color", color)}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                        form.watch("color") === color 
+                          ? "border-gray-800 ring-2 ring-gray-400" 
+                          : "border-gray-300 hover:border-gray-500"
+                      }`}
+                      style={{ backgroundColor: color }}
+                      data-testid={`color-picker-${color}`}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3">
+                  <div
+                    className="w-8 h-8 rounded-full border-2 border-gray-300"
+                    style={{ backgroundColor: recipe?.color || getNextColor(allRecipes) }}
+                    data-testid="recipe-color-display"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Image */}
+            <div>
+              <Label htmlFor="image" className="text-lg font-semibold">Image (optional)</Label>
+              {isEditMode ? (
+                <Input
+                  {...form.register("image")}
+                  placeholder="Image URL"
+                  className="mt-2"
+                  data-testid="input-recipe-image"
+                />
+              ) : (
+                <div className="mt-2 text-muted-foreground" data-testid="text-recipe-image">
+                  {recipe?.image ? (
+                    <img src={recipe.image} alt={recipe.title} className="max-w-xs rounded-md" />
+                  ) : (
+                    "No image"
+                  )}
                 </div>
               )}
             </div>

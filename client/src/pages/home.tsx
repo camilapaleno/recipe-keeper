@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Layers } from "lucide-react";
+import { Plus, Layers, Bean } from "lucide-react";
 import DraggableGrid from "@/components/draggable-grid";
 import RecipeModal from "@/components/recipe-modal";
 import { useRecipes } from "@/hooks/use-recipes";
@@ -53,29 +53,26 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header Section */}
-      <header className="py-8 px-4">
+      <header className="py-16 px-4">
         <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-foreground mb-6" data-testid="title-recipe-keeper">
-            Recipe Keeper
+          <div className="mb-8">
+            <Bean className="w-16 h-16 mx-auto mb-6 text-foreground" />
+          </div>
+          <h1 className="text-4xl font-normal text-foreground mb-4" data-testid="title-recipe-keeper">
+            recipe keeper
           </h1>
+          <p className="text-muted-foreground mb-8 text-lg">
+            add your recipes here to find them more easily
+          </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button
               onClick={handleNewRecipe}
-              className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+              variant="outline"
+              className="gap-2 px-2 py-2 rounded-lg text-sm font-medium transition-all border bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200"
               data-testid="button-new-recipe"
             >
               <Plus className="w-4 h-4 mr-2" />
-              New Recipe
-            </Button>
-            <Button
-              onClick={handleNewStack}
-              variant="secondary"
-              className="bg-secondary text-secondary-foreground px-6 py-3 rounded-lg font-medium hover:bg-secondary/80 transition-colors"
-              data-testid="button-new-stack"
-              disabled={createStack.isPending}
-            >
-              <Layers className="w-4 h-4 mr-2" />
-              New Stack
+              add another recipe
             </Button>
           </div>
         </div>

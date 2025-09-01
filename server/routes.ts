@@ -11,6 +11,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const recipes = await storage.getRecipes();
       res.json(recipes);
     } catch (error) {
+      console.error("Error fetching recipes:", error);
       res.status(500).json({ message: "Failed to fetch recipes" });
     }
   });

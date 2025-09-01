@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Rock+Salt&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,19 +11,19 @@
   --card-foreground: hsl(20, 4%, 17%);
   --popover: hsl(60, 5%, 96%);
   --popover-foreground: hsl(20, 4%, 17%);
-  --primary: hsl(142, 25%, 55%);
+  --primary: hsl(0, 0%, 0%);
   --primary-foreground: hsl(0, 0%, 100%);
   --secondary: hsl(60, 5%, 90%);
   --secondary-foreground: hsl(20, 4%, 17%);
-  --muted: hsl(60, 5%, 93%);
+  --muted: hsla(0, 6%, 28%, 0.1);
   --muted-foreground: hsl(20, 4%, 45%);
-  --accent: hsl(142, 25%, 88%);
+  --accent: hsl(0, 0%, 83%);
   --accent-foreground: hsl(20, 4%, 17%);
-  --destructive: hsl(356.3033, 90.5579%, 54.3137%);
+  --destructive: hsl(12, 90%, 39%);
   --destructive-foreground: hsl(0, 0%, 100%);
   --border: hsl(60, 5%, 85%);
   --input: hsl(60, 5%, 96%);
-  --ring: hsl(142, 25%, 55%);
+  --ring: hsl(0, 0%, 63%);
   --chart-1: hsl(142, 25%, 55%);
   --chart-2: hsl(159.7826, 100%, 36.0784%);
   --chart-3: hsl(42.0290, 92.8251%, 56.2745%);
@@ -29,12 +31,12 @@
   --chart-5: hsl(341.4894, 75.2000%, 50.9804%);
   --sidebar: hsl(60, 5%, 96%);
   --sidebar-foreground: hsl(20, 4%, 17%);
-  --sidebar-primary: hsl(142, 25%, 55%);
+  --sidebar-primary: hsl(0, 0%, 60%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
   --sidebar-accent: hsl(142, 25%, 88%);
   --sidebar-accent-foreground: hsl(20, 4%, 17%);
   --sidebar-border: hsl(60, 5%, 85%);
-  --sidebar-ring: hsl(142, 25%, 55%);
+  --sidebar-ring: hsl(0, 0%, 69%);
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
@@ -102,7 +104,7 @@
 
 @layer utilities {
   .recipe-card {
-    @apply aspect-[3/5] bg-card border border-border rounded-lg shadow-sm transition-all duration-200 cursor-pointer relative overflow-hidden;
+    @apply aspect-square border rounded-xl shadow-sm transition-all duration-200 cursor-pointer relative overflow-visible;
   }
 
   .recipe-card:hover {
@@ -110,46 +112,108 @@
   }
 
   .stack-card {
-    @apply aspect-[3/5] relative cursor-pointer transition-all duration-300;
+    @apply aspect-square relative cursor-pointer transition-all duration-300;
   }
 
   .stack-card:hover {
     @apply -translate-y-1;
   }
 
+  .stack-card:hover .stack-layer:nth-child(1) {
+    transform: translateY(-6px) translateX(-4px) rotate(-2deg) scale(1.02);
+  }
+
+  .stack-card:hover .stack-layer:nth-child(2) {
+    transform: translateY(-3px) translateX(-2px) rotate(-1deg) scale(1.01);
+  }
+
   .stack-layer {
-    @apply absolute w-full h-full bg-card border border-border rounded-lg transition-all duration-300;
+    @apply absolute w-full h-full rounded-2xl transition-all duration-300 border border-gray-200;
+    background-color: #fefce8;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .stack-layer:nth-child(1) {
     @apply z-[1];
-    transform: translateY(-6px) translateX(-4px);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    transform: translateY(-4px) translateX(-3px) rotate(-1.5deg);
+    background-color: #fef3c7;
   }
 
   .stack-layer:nth-child(2) {
     @apply z-[2];
-    transform: translateY(-3px) translateX(-2px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px) translateX(-1px) rotate(-0.5deg);
+    background-color: #fef9c3;
   }
 
   .stack-layer:nth-child(3) {
     @apply z-[3];
-    transform: translateY(0px) translateX(0px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+    background-color: #fefce8;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
   }
 
   .grid-container {
-    @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply flex flex-wrap justify-center gap-8 max-w-6xl mx-auto px-8 py-8;
+  }
+  
+  .grid-container > * {
+    /* Fixed size for consistent 4-column layout */
+    width: 280px;
+    height: 280px;
+    flex-shrink: 0;
+  }
+  
+  @media (max-width: 1400px) {
+    .grid-container > * {
+      width: 260px;
+      height: 260px;
+    }
+  }
+  
+  @media (max-width: 1024px) {
+    .grid-container {
+      @apply gap-6;
+    }
+    .grid-container > * {
+      width: 220px;
+      height: 220px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .grid-container {
+      @apply gap-4;
+    }
+    .grid-container > * {
+      width: 180px;
+      height: 180px;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .grid-container > * {
+      width: 160px;
+      height: 160px;
+    }
   }
 
   .drop-target {
-    @apply ring-2 ring-primary ring-opacity-60;
+    @apply ring-4 ring-primary ring-opacity-80 transform scale-105;
+    transition: all 0.2s ease;
   }
   
   .drop-target .stack-layer {
     @apply border-primary;
-    background-color: hsl(var(--primary) / 0.1);
+    background-color: hsl(var(--primary) / 0.15);
+    transform: translateY(0px) translateX(0px) scale(1.02);
+  }
+  
+  .drop-target .stack-layer:nth-child(1) {
+    transform: translateY(-6px) translateX(-4px) scale(1.02);
+  }
+
+  .drop-target .stack-layer:nth-child(2) {
+    transform: translateY(-3px) translateX(-2px) scale(1.02);
   }
 
   .overlay {
@@ -157,7 +221,7 @@
   }
 
   .full-card {
-    @apply bg-card rounded-lg max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl mx-4 animate-in slide-in-from-bottom-4 zoom-in-95 duration-300;
+    @apply bg-card rounded-2xl max-w-6xl w-[90vw] max-h-[95vh] overflow-y-auto shadow-2xl mx-4 animate-in slide-in-from-bottom-4 zoom-in-95 duration-300;
   }
 
   .ingredient-item {
@@ -170,6 +234,8 @@
 
   .drag-handle {
     @apply absolute top-2 right-2 opacity-0 transition-opacity duration-200 cursor-grab text-muted-foreground hover:text-foreground;
+    /* Ensure drag handle is above other elements */
+    z-index: 10;
   }
 
   .recipe-card:hover .drag-handle,
@@ -181,8 +247,97 @@
     @apply cursor-grabbing;
   }
 
+  /* Drag preview styles */
+  .drag-preview {
+    @apply opacity-80 transform rotate-3 scale-105;
+    pointer-events: none;
+  }
+  
+  /* Drop zone indicator */
+  .drop-zone {
+    @apply bg-primary/10 border-2 border-primary border-dashed rounded-lg;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Drop target styling for stacks */
+  .stack-card.drop-target .stack-layer {
+    border-color: #16a34a !important;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2) !important;
+  }
+
+  .stack-card.drop-target .stack-layer:nth-child(1) {
+    transform: translateY(-6px) translateX(-4px) rotate(-2deg) scale(1.05);
+  }
+
+  .stack-card.drop-target .stack-layer:nth-child(2) {
+    transform: translateY(-3px) translateX(-2px) rotate(-1deg) scale(1.03);
+  }
+
+  .stack-card.drop-target .stack-layer:nth-child(3) {
+    transform: translateY(0px) translateX(0px) rotate(0deg) scale(1.01);
+  }
+  
+  /* Dragging state */
+  .dragging {
+    @apply opacity-50 scale-95;
+    transition: all 0.2s ease;
+  }
+  
+  /* Grid item animations */
+  .grid-item {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .grid-item.is-reordering {
+    @apply scale-105;
+  }
+
+  /* Reordering state for better UX */
+  .reordering {
+    @apply pointer-events-none opacity-75;
+    transition: opacity 0.2s ease;
+  }
+  
+  .reordering * {
+    pointer-events: none;
+  }
+
   .fan-out-card {
     @apply transition-all duration-500 ease-out;
+  }
+
+  .fan-out-recipe-card {
+    width: 280px;
+    height: 280px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 1400px) {
+    .fan-out-recipe-card {
+      width: 260px;
+      height: 260px;
+    }
+  }
+  
+  @media (max-width: 1024px) {
+    .fan-out-recipe-card {
+      width: 220px;
+      height: 220px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .fan-out-recipe-card {
+      width: 180px;
+      height: 180px;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .fan-out-recipe-card {
+      width: 160px;
+      height: 160px;
+    }
   }
 
   .line-clamp-2 {
@@ -197,5 +352,9 @@
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .recipe-title {
+    font-family: 'Rock Salt', cursive;
   }
 }

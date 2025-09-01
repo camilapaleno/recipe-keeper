@@ -1,21 +1,23 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, jsonb, integer } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const recipes = pgTable("recipes", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const recipes = sqliteTable("recipes", {
+  id: text("id").primaryKey().$default(() => crypto.randomUUID()),
   title: text("title").notNull(),
   description: text("description").notNull().default(""),
   category: text("category").notNull().default(""),
-  ingredients: jsonb("ingredients").$type<string[]>().notNull().default([]),
+  ingredients: text("ingredients", { mode: "json" }).$type<string[]>().notNull().default([]),
   directions: text("directions").notNull().default(""),
   position: integer("position").notNull().default(0),
-  stackId: varchar("stack_id"),
+  stackId: text("stack_id"),
+  color: text("color").notNull().default("#fed07d"),
+  image: text("image"),
 });
 
-export const stacks = pgTable("stacks", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const stacks = sqliteTable("stacks", {
+  id: text("id").primaryKey().$default(() => crypto.randomUUID()),
   name: text("name").notNull(),
   description: text("description").notNull().default(""),
   position: integer("position").notNull().default(0),
@@ -34,8 +36,8 @@ export type Recipe = typeof recipes.$inferSelect;
 export type InsertStack = z.infer<typeof insertStackSchema>;
 export type Stack = typeof stacks.$inferSelect;
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey().$default(() => crypto.randomUUID()),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
 });
