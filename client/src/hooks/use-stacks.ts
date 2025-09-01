@@ -1,47 +1,47 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { clientStorage } from "@/lib/client-storage";
 import type { Stack, InsertStack, Recipe } from "@shared/schema";
 
 export function useStacks() {
   const queryClient = useQueryClient();
 
   const query = useQuery<Stack[]>({
-    queryKey: ["/api/stacks"],
+    queryKey: ["stacks"],
+    queryFn: () => clientStorage.getStacks(),
   });
 
   const createStack = useMutation({
     mutationFn: async (data: InsertStack) => {
-      const response = await apiRequest("POST", "/api/stacks", data);
-      return response.json();
+      return await clientStorage.createStack(data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/stacks"] });
+      queryClient.invalidateQueries({ queryKey: ["stacks"] });
     },
   });
 
   const updateStack = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<InsertStack> }) => {
-      const response = await apiRequest("PATCH", `/api/stacks/${id}`, data);
-      return response.json();
+      return await clientStorage.updateStack(id, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/stacks"] });
+      queryClient.invalidateQueries({ queryKey: ["stacks"] });
     },
   });
 
   const deleteStack = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/stacks/${id}`);
+      return await clientStorage.deleteStack(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/stacks"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      queryClient.invalidateQueries({ queryKey: ["stacks"] });
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
     },
   });
 
   const getRecipesByStack = (stackId: string) => {
     return useQuery<Recipe[]>({
-      queryKey: ["/api/stacks", stackId, "recipes"],
+      queryKey: ["stacks", stackId, "recipes"],
+      queryFn: () => clientStorage.getRecipesByStack(stackId),
     });
   };
 

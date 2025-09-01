@@ -1,40 +1,39 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { clientStorage } from "@/lib/client-storage";
 import type { Recipe, InsertRecipe } from "@shared/schema";
 
 export function useRecipes() {
   const queryClient = useQueryClient();
 
   const query = useQuery<Recipe[]>({
-    queryKey: ["/api/recipes"],
+    queryKey: ["recipes"],
+    queryFn: () => clientStorage.getRecipes(),
   });
 
   const createRecipe = useMutation({
     mutationFn: async (data: InsertRecipe) => {
-      const response = await apiRequest("POST", "/api/recipes", data);
-      return response.json();
+      return await clientStorage.createRecipe(data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
     },
   });
 
   const updateRecipe = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<InsertRecipe> }) => {
-      const response = await apiRequest("PATCH", `/api/recipes/${id}`, data);
-      return response.json();
+      return await clientStorage.updateRecipe(id, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
     },
   });
 
   const deleteRecipe = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/recipes/${id}`);
+      return await clientStorage.deleteRecipe(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/recipes"] });
+      queryClient.invalidateQueries({ queryKey: ["recipes"] });
     },
   });
 
