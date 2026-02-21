@@ -50,6 +50,13 @@ export default function Home() {
     setIsEditMode(false);
   };
 
+  const handleExportSeed = () => {
+    const recipes = localStorage.getItem('recipestack-recipes');
+    if (!recipes) return;
+    navigator.clipboard.writeText(recipes);
+    alert('Recipes copied to clipboard! Paste to Claude to update seed data.');
+  };
+
   return (
     <div className="min-h-screen bg-background relative isolate">
       {/* Background images - sit behind all content */}
@@ -105,6 +112,18 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Dev-only export button */}
+      {window.location.hostname === 'localhost' && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <button
+            onClick={handleExportSeed}
+            className="text-xs px-2 py-1 bg-black/10 hover:bg-black/20 rounded text-gray-600"
+          >
+            export seed
+          </button>
+        </div>
+      )}
 
       {/* Main Grid */}
       <main className="pb-12">

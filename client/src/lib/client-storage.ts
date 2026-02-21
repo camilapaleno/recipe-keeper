@@ -178,8 +178,12 @@ export class ClientStorage {
       return DEFAULT_RECIPES;
     }
 
-    // Full reset when version changes
+    // Full reset when version changes — but never on localhost (preserve dev edits)
     if (storedVersion !== SEED_VERSION) {
+      if (window.location.hostname === 'localhost') {
+        localStorage.setItem(this.seedVersionKey, SEED_VERSION);
+        return JSON.parse(stored);
+      }
       this.setStoredRecipes(DEFAULT_RECIPES);
       localStorage.setItem(this.seedVersionKey, SEED_VERSION);
       return DEFAULT_RECIPES;
