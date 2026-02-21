@@ -5,7 +5,6 @@ function generateUUID(): string {
   return 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 }
 
-const SEED_VERSION = "8";
 
 // Default seed recipes synced from database
 const DEFAULT_RECIPES: Recipe[] = [
@@ -165,31 +164,17 @@ const DEFAULT_RECIPES: Recipe[] = [
 export class ClientStorage {
   private recipesKey = 'recipestack-recipes';
   private stacksKey = 'recipestack-stacks';
-  private seedVersionKey = 'recipestack-seed-version';
 
   private getStoredRecipes(): Recipe[] {
     const stored = localStorage.getItem(this.recipesKey);
-    const storedVersion = localStorage.getItem(this.seedVersionKey);
+    const userRecipes: Recipe[] = stored
+      ? (JSON.parse(stored) as Recipe[]).filter(r => !r.id.startsWith('seed-'))
+      : [];
 
-    if (!stored) {
-      // First time user
-      this.setStoredRecipes(DEFAULT_RECIPES);
-      localStorage.setItem(this.seedVersionKey, SEED_VERSION);
-      return DEFAULT_RECIPES;
-    }
-
-    // Full reset when version changes — but never on localhost (preserve dev edits)
-    if (storedVersion !== SEED_VERSION) {
-      if (window.location.hostname === 'localhost') {
-        localStorage.setItem(this.seedVersionKey, SEED_VERSION);
-        return JSON.parse(stored);
-      }
-      this.setStoredRecipes(DEFAULT_RECIPES);
-      localStorage.setItem(this.seedVersionKey, SEED_VERSION);
-      return DEFAULT_RECIPES;
-    }
-
-    return JSON.parse(stored);
+    // Always use seed recipes from code, preserve user-added recipes
+    const merged = [...DEFAULT_RECIPES, ...userRecipes];
+    this.setStoredRecipes(merged);
+    return merged;
   }
 
   private setStoredRecipes(recipes: Recipe[]): void {
