@@ -1,0 +1,596 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Keeper - Digital Recipe Collection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    borderRadius: {
+                        lg: "var(--radius)",
+                        md: "calc(var(--radius) - 2px)",
+                        sm: "calc(var(--radius) - 4px)",
+                    },
+                    colors: {
+                        background: "var(--background)",
+                        foreground: "var(--foreground)",
+                        card: {
+                            DEFAULT: "var(--card)",
+                            foreground: "var(--card-foreground)",
+                        },
+                        popover: {
+                            DEFAULT: "var(--popover)",
+                            foreground: "var(--popover-foreground)",
+                        },
+                        primary: {
+                            DEFAULT: "var(--primary)",
+                            foreground: "var(--primary-foreground)",
+                        },
+                        secondary: {
+                            DEFAULT: "var(--secondary)",
+                            foreground: "var(--secondary-foreground)",
+                        },
+                        muted: {
+                            DEFAULT: "var(--muted)",
+                            foreground: "var(--muted-foreground)",
+                        },
+                        accent: {
+                            DEFAULT: "var(--accent)",
+                            foreground: "var(--accent-foreground)",
+                        },
+                        destructive: {
+                            DEFAULT: "var(--destructive)",
+                            foreground: "var(--destructive-foreground)",
+                        },
+                        border: "var(--border)",
+                        input: "var(--input)",
+                        ring: "var(--ring)",
+                    },
+                    fontFamily: {
+                        sans: ["var(--font-sans)"],
+                    }
+                },
+            }
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --background: hsl(210 20% 98%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(142.1 76.2% 36.3%);
+            --primary-foreground: hsl(355.7 100% 97.3%);
+            --secondary: hsl(210 40% 94%);
+            --secondary-foreground: hsl(222.2 84% 4.9%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(210 40% 94%);
+            --accent-foreground: hsl(222.2 84% 4.9%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(142.1 76.2% 36.3%);
+            --radius: 8px;
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+        }
+        
+        .paper-texture {
+            background: linear-gradient(135deg, 
+                hsl(0 0% 100%) 0%, 
+                hsl(210 20% 99%) 100%);
+            box-shadow: 
+                0 1px 3px 0 rgba(0, 0, 0, 0.1),
+                0 1px 2px 0 rgba(0, 0, 0, 0.06),
+                inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+        
+        .notebook-texture {
+            background: linear-gradient(135deg, 
+                hsl(142.1 30% 25%) 0%, 
+                hsl(142.1 40% 30%) 100%);
+            position: relative;
+        }
+        
+        .notebook-texture::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: repeating-linear-gradient(
+                to bottom,
+                hsl(142.1 60% 20%) 0px,
+                hsl(142.1 60% 20%) 2px,
+                transparent 2px,
+                transparent 8px
+            );
+        }
+        
+        .dragging {
+            transform: rotate(2deg);
+            z-index: 1000;
+        }
+        
+        .thumbnail-card {
+            aspect-ratio: 3/5;
+            transition: all 0.2s ease;
+        }
+        
+        .thumbnail-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .fullscreen-overlay {
+            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .recipe-card-full {
+            aspect-ratio: 3/5;
+            max-width: 600px;
+            max-height: 80vh;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-5x5 {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .grid-5x5 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .ingredient-item {
+            transition: all 0.2s ease;
+        }
+        
+        .ingredient-item:hover {
+            background-color: hsl(210 40% 96%);
+        }
+        
+        .edit-mode {
+            border: 2px dashed hsl(142.1 76.2% 36.3%);
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground min-h-screen">
+    <!-- @COMPONENT: Header -->
+    <header class="bg-card border-b border-border px-6 py-4 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-utensils text-primary text-2xl"></i>
+                <h1 class="text-2xl font-bold text-foreground">Recipe Keeper</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-accent transition-colors" data-event="click:toggleViewMode">
+                    <i class="fas fa-th-large mr-2"></i>
+                    Grid View
+                </button>
+                <button class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity" data-event="click:createNewRecipe">
+                    <i class="fas fa-plus mr-2"></i>
+                    New Recipe
+                </button>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <!-- @COMPONENT: MainContent -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Search and Filter Bar -->
+        <div class="mb-8 flex flex-col sm:flex-row gap-4">
+            <div class="flex-1 relative">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"></i>
+                <input type="text" placeholder="Search recipes..." class="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent">
+            </div>
+            <select class="px-4 py-3 bg-card border border-border rounded-lg focus:ring-2 focus:ring-ring">
+                <option>All Categories</option>
+                <option>Breakfast</option>
+                <option>Lunch</option>
+                <option>Dinner</option>
+                <option>Dessert</option>
+                <option>Snacks</option>
+            </select>
+            <button class="px-4 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-accent transition-colors">
+                <i class="fas fa-filter mr-2"></i>
+                Filters
+            </button>
+        </div>
+
+        <!-- Stacks Section -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-foreground">Recipe Collections</h2>
+                <button class="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity text-sm" data-event="click:createNewStack">
+                    <i class="fas fa-plus mr-1"></i>
+                    New Collection
+                </button>
+            </div>
+            
+            <div class="flex gap-4 overflow-x-auto pb-4">
+                <!-- @MAP: stacks.map(stack => ( -->
+                <div class="flex-shrink-0 w-40 h-52 notebook-texture rounded-lg cursor-pointer hover:scale-105 transition-transform" data-event="click:openStack" data-stack-id="italian-recipes">
+                    <div class="p-4 h-full flex flex-col justify-between text-white">
+                        <div>
+                            <h3 class="font-medium text-sm mb-1" data-bind="stack.name">Italian Recipes</h3>
+                            <p class="text-xs opacity-80" data-bind="stack.count">12 recipes</p>
+                        </div>
+                        <div class="text-xs opacity-60">
+                            <i class="fas fa-book mr-1"></i>
+                            Collection
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex-shrink-0 w-40 h-52 notebook-texture rounded-lg cursor-pointer hover:scale-105 transition-transform" data-event="click:openStack" data-stack-id="quick-meals">
+                    <div class="p-4 h-full flex flex-col justify-between text-white">
+                        <div>
+                            <h3 class="font-medium text-sm mb-1" data-bind="stack.name">Quick Meals</h3>
+                            <p class="text-xs opacity-80" data-bind="stack.count">8 recipes</p>
+                        </div>
+                        <div class="text-xs opacity-60">
+                            <i class="fas fa-book mr-1"></i>
+                            Collection
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex-shrink-0 w-40 h-52 notebook-texture rounded-lg cursor-pointer hover:scale-105 transition-transform" data-event="click:openStack" data-stack-id="desserts">
+                    <div class="p-4 h-full flex flex-col justify-between text-white">
+                        <div>
+                            <h3 class="font-medium text-sm mb-1" data-bind="stack.name">Desserts</h3>
+                            <p class="text-xs opacity-80" data-bind="stack.count">15 recipes</p>
+                        </div>
+                        <div class="text-xs opacity-60">
+                            <i class="fas fa-book mr-1"></i>
+                            Collection
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+        </div>
+
+        <!-- Recipe Grid -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-foreground">All Recipes</h2>
+                <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span data-bind="recipes.length">24</span> recipes
+                </div>
+            </div>
+            
+            <!-- @FUNCTIONALITY: This grid should implement drag-and-drop reordering using react-beautiful-dnd -->
+            <div class="grid grid-cols-5 gap-4 grid-5x5" data-implementation="Implement drag-and-drop with react-beautiful-dnd">
+                <!-- @MAP: recipes.map(recipe => ( -->
+                <div class="thumbnail-card paper-texture rounded-lg p-4 cursor-pointer" data-event="click:openRecipeFullscreen" data-recipe-id="chocolate-cake">
+                    <!-- Recipe thumbnail image placeholder -->
+                    <!-- A delicious chocolate cake with rich frosting and chocolate shavings -->
+                    <div class="w-full h-24 bg-muted rounded-md mb-3 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=300" alt="Chocolate cake" class="w-full h-full object-cover" data-mock-image="true" />
+                    </div>
+                    <h3 class="font-medium text-sm mb-2 line-clamp-2" data-bind="recipe.title">Chocolate Cake</h3>
+                    <p class="text-xs text-muted-foreground line-clamp-3" data-bind="recipe.description">Rich and moist chocolate cake with creamy frosting. Perfect for birthdays and special occasions.</p>
+                    <div class="flex items-center justify-between mt-3 text-xs text-muted-foreground">
+                        <span data-bind="recipe.prepTime">45 min</span>
+                        <i class="fas fa-grip-vertical cursor-move" data-implementation="Drag handle for reordering"></i>
+                    </div>
+                </div>
+                
+                <div class="thumbnail-card paper-texture rounded-lg p-4 cursor-pointer" data-event="click:openRecipeFullscreen" data-recipe-id="pasta-carbonara">
+                    <!-- A classic Italian pasta carbonara with crispy bacon and parmesan -->
+                    <div class="w-full h-24 bg-muted rounded-md mb-3 overflow-hidden">
+                        <img src="https://pixabay.com/get/gd33b19a8fcb1e35111646e611c76f7bdcc3a550b8de9f0a268883ab012238113553a51a27159842c007b5d7be7b5bb85e45a5ed9c84901dba6713a99c7bdb0e3_1280.jpg" alt="Pasta carbonara" class="w-full h-full object-cover" data-mock-image="true" />
+                    </div>
+                    <h3 class="font-medium text-sm mb-2 line-clamp-2" data-bind="recipe.title">Pasta Carbonara</h3>
+                    <p class="text-xs text-muted-foreground line-clamp-3" data-bind="recipe.description">Classic Italian pasta with eggs, cheese, and crispy pancetta.</p>
+                    <div class="flex items-center justify-between mt-3 text-xs text-muted-foreground">
+                        <span data-bind="recipe.prepTime">20 min</span>
+                        <i class="fas fa-grip-vertical cursor-move"></i>
+                    </div>
+                </div>
+                
+                <div class="thumbnail-card paper-texture rounded-lg p-4 cursor-pointer" data-event="click:openRecipeFullscreen" data-recipe-id="chicken-stir-fry">
+                    <!-- A colorful chicken stir-fry with fresh vegetables in a wok -->
+                    <div class="w-full h-24 bg-muted rounded-md mb-3 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1603133872878-684f208fb84b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=300" alt="Chicken stir-fry" class="w-full h-full object-cover" data-mock-image="true" />
+                    </div>
+                    <h3 class="font-medium text-sm mb-2 line-clamp-2" data-bind="recipe.title">Chicken Stir-Fry</h3>
+                    <p class="text-xs text-muted-foreground line-clamp-3" data-bind="recipe.description">Quick and healthy stir-fry with tender chicken and crisp vegetables.</p>
+                    <div class="flex items-center justify-between mt-3 text-xs text-muted-foreground">
+                        <span data-bind="recipe.prepTime">15 min</span>
+                        <i class="fas fa-grip-vertical cursor-move"></i>
+                    </div>
+                </div>
+                
+                <div class="thumbnail-card paper-texture rounded-lg p-4 cursor-pointer" data-event="click:openRecipeFullscreen" data-recipe-id="caesar-salad">
+                    <!-- A fresh Caesar salad with croutons and parmesan cheese -->
+                    <div class="w-full h-24 bg-muted rounded-md mb-3 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1551248429-40975aa4de74?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=300" alt="Caesar salad" class="w-full h-full object-cover" data-mock-image="true" />
+                    </div>
+                    <h3 class="font-medium text-sm mb-2 line-clamp-2" data-bind="recipe.title">Caesar Salad</h3>
+                    <p class="text-xs text-muted-foreground line-clamp-3" data-bind="recipe.description">Crisp romaine lettuce with homemade Caesar dressing and croutons.</p>
+                    <div class="flex items-center justify-between mt-3 text-xs text-muted-foreground">
+                        <span data-bind="recipe.prepTime">10 min</span>
+                        <i class="fas fa-grip-vertical cursor-move"></i>
+                    </div>
+                </div>
+                
+                <div class="thumbnail-card paper-texture rounded-lg p-4 cursor-pointer" data-event="click:openRecipeFullscreen" data-recipe-id="beef-tacos">
+                    <!-- Delicious beef tacos with fresh toppings and lime -->
+                    <div class="w-full h-24 bg-muted rounded-md mb-3 overflow-hidden">
+                        <img src="https://pixabay.com/get/g72255e2672474e83e64f53b6062ba1f22f1af970d1e1297656b3737cdc646e422ddf6eb8280b9832ff8c88108cced39b1e6fd10bdb44b847bd00a1e9269cbca7_1280.jpg" alt="Beef tacos" class="w-full h-full object-cover" data-mock-image="true" />
+                    </div>
+                    <h3 class="font-medium text-sm mb-2 line-clamp-2" data-bind="recipe.title">Beef Tacos</h3>
+                    <p class="text-xs text-muted-foreground line-clamp-3" data-bind="recipe.description">Seasoned ground beef tacos with fresh toppings and lime.</p>
+                    <div class="flex items-center justify-between mt-3 text-xs text-muted-foreground">
+                        <span data-bind="recipe.prepTime">25 min</span>
+                        <i class="fas fa-grip-vertical cursor-move"></i>
+                    </div>
+                </div>
+                
+                <!-- Additional recipe cards would continue the pattern -->
+                <div class="thumbnail-card border-2 border-dashed border-muted rounded-lg p-4 cursor-pointer hover:border-primary transition-colors flex items-center justify-center" data-event="click:createNewRecipe">
+                    <div class="text-center text-muted-foreground">
+                        <i class="fas fa-plus text-2xl mb-2"></i>
+                        <p class="text-xs">Add Recipe</p>
+                    </div>
+                </div>
+                
+                <!-- Placeholder cards to show 5x5 grid structure -->
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <div class="thumbnail-card bg-muted/20 rounded-lg"></div>
+                <!-- @END_MAP )) -->
+            </div>
+        </div>
+    </main>
+    <!-- @END_COMPONENT: MainContent -->
+
+    <!-- @COMPONENT: FullscreenRecipeOverlay -->
+    <!-- @STATE: isFullscreenOpen:boolean = false, selectedRecipe:object = null, isEditMode:boolean = false -->
+    <div class="fixed inset-0 fullscreen-overlay z-50 flex items-center justify-center p-4 hidden" id="fullscreen-overlay" data-event="click:closeFullscreen">
+        <div class="recipe-card-full paper-texture rounded-lg shadow-2xl overflow-hidden max-w-full" data-event="click:stopPropagation">
+            <!-- Recipe Card Header -->
+            <div class="p-6 border-b border-border flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-lg overflow-hidden">
+                        <!-- A delicious chocolate cake with rich frosting and chocolate shavings -->
+                        <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" alt="Recipe thumbnail" class="w-full h-full object-cover" data-mock-image="true" />
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-semibold" data-bind="selectedRecipe.title">Chocolate Cake</h2>
+                        <p class="text-sm text-muted-foreground" data-bind="selectedRecipe.category">Dessert • 45 minutes</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="p-2 hover:bg-muted rounded-lg transition-colors" data-event="click:toggleEditMode">
+                        <i class="fas fa-edit text-muted-foreground"></i>
+                    </button>
+                    <button class="p-2 hover:bg-muted rounded-lg transition-colors" data-event="click:closeFullscreen">
+                        <i class="fas fa-times text-muted-foreground"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recipe Content -->
+            <div class="p-6 h-full overflow-y-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+                    <!-- Left Column: Description and Ingredients -->
+                    <div class="space-y-6">
+                        <!-- Description Section -->
+                        <div>
+                            <h3 class="font-medium text-lg mb-3">Description</h3>
+                            <div class="bg-muted/30 rounded-lg p-4">
+                                <textarea class="w-full h-24 bg-transparent border-none resize-none focus:outline-none text-sm" placeholder="Add a description for your recipe..." data-bind="selectedRecipe.description" readonly data-mock="true">Rich and moist chocolate cake with creamy frosting. Perfect for birthdays and special occasions. This recipe has been in our family for generations and never fails to impress guests.</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Ingredients Section -->
+                        <div>
+                            <h3 class="font-medium text-lg mb-3">Ingredients</h3>
+                            <div class="space-y-2">
+                                <!-- @MAP: recipe.ingredients.map(ingredient => ( -->
+                                <div class="ingredient-item flex items-start gap-3 p-2 rounded-lg" data-ingredient-id="flour">
+                                    <input type="checkbox" class="mt-1 rounded border-border focus:ring-ring" data-bind="ingredient.checked" data-mock="true">
+                                    <div class="flex-1">
+                                        <span class="text-sm" data-bind="ingredient.text" data-mock="true">2 cups all-purpose flour</span>
+                                    </div>
+                                    <button class="opacity-0 group-hover:opacity-100 p-1 hover:bg-muted rounded transition-all" data-event="click:removeIngredient">
+                                        <i class="fas fa-times text-xs text-muted-foreground"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="ingredient-item flex items-start gap-3 p-2 rounded-lg">
+                                    <input type="checkbox" class="mt-1 rounded border-border focus:ring-ring" data-mock="true">
+                                    <span class="text-sm" data-mock="true">2 cups granulated sugar</span>
+                                </div>
+                                
+                                <div class="ingredient-item flex items-start gap-3 p-2 rounded-lg">
+                                    <input type="checkbox" class="mt-1 rounded border-border focus:ring-ring" data-mock="true">
+                                    <span class="text-sm" data-mock="true">3/4 cup unsweetened cocoa powder</span>
+                                </div>
+                                
+                                <div class="ingredient-item flex items-start gap-3 p-2 rounded-lg">
+                                    <input type="checkbox" class="mt-1 rounded border-border focus:ring-ring" data-mock="true">
+                                    <span class="text-sm" data-mock="true">2 teaspoons baking soda</span>
+                                </div>
+                                
+                                <div class="ingredient-item flex items-start gap-3 p-2 rounded-lg">
+                                    <input type="checkbox" class="mt-1 rounded border-border focus:ring-ring" data-mock="true">
+                                    <span class="text-sm" data-mock="true">1 teaspoon salt</span>
+                                </div>
+                                
+                                <div class="ingredient-item flex items-start gap-3 p-2 rounded-lg">
+                                    <input type="checkbox" class="mt-1 rounded border-border focus:ring-ring" data-mock="true">
+                                    <span class="text-sm" data-mock="true">2 large eggs</span>
+                                </div>
+                                <!-- @END_MAP )) -->
+                                
+                                <!-- Add new ingredient button (shown in edit mode) -->
+                                <button class="w-full p-3 border-2 border-dashed border-muted hover:border-primary rounded-lg text-sm text-muted-foreground hover:text-primary transition-colors hidden" data-event="click:addIngredient" data-edit-mode="true">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    Add ingredient
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Directions -->
+                    <div>
+                        <h3 class="font-medium text-lg mb-3">Directions</h3>
+                        <div class="bg-muted/30 rounded-lg p-4 h-full">
+                            <textarea class="w-full h-full min-h-80 bg-transparent border-none resize-none focus:outline-none text-sm leading-relaxed" placeholder="Add step-by-step directions..." data-bind="selectedRecipe.directions" readonly data-mock="true">1. Preheat your oven to 350°F (175°C). Grease and flour two 9-inch round cake pans.
+
+2. In a large bowl, whisk together flour, sugar, cocoa powder, baking soda, and salt.
+
+3. In another bowl, beat eggs and add to the dry ingredients along with 1 cup hot water, 1/2 cup vegetable oil, and 1 teaspoon vanilla extract.
+
+4. Beat on medium speed for 2 minutes. The batter will be thin.
+
+5. Pour evenly into prepared pans and bake for 30-35 minutes or until a toothpick inserted in center comes out clean.
+
+6. Cool in pans for 10 minutes, then remove to wire racks to cool completely.
+
+7. Frost with your favorite chocolate frosting and enjoy!</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Mode Buttons -->
+            <div class="p-6 border-t border-border hidden" data-edit-mode="true">
+                <div class="flex justify-end gap-3">
+                    <button class="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-accent transition-colors" data-event="click:cancelEdit">
+                        Cancel
+                    </button>
+                    <button class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity" data-event="click:saveRecipe">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: FullscreenRecipeOverlay -->
+
+    <!-- @COMPONENT: FloatingActionButton -->
+    <div class="fixed bottom-6 right-6 z-30">
+        <button class="w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center" data-event="click:createNewRecipe">
+            <i class="fas fa-plus text-xl"></i>
+        </button>
+    </div>
+    <!-- @END_COMPONENT: FloatingActionButton -->
+
+    <script>
+        // TODO: Implement React component logic, state management, and drag-and-drop functionality
+        // TODO: Integrate with react-beautiful-dnd for drag and drop
+        // TODO: Add localStorage persistence
+        // TODO: Implement proper form validation and error handling
+        
+        (function() {
+            // Demo functionality for the mockup
+            const fullscreenOverlay = document.getElementById('fullscreen-overlay');
+            
+            // Open recipe in fullscreen
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('[data-event*="openRecipeFullscreen"]')) {
+                    e.preventDefault();
+                    fullscreenOverlay.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+            });
+            
+            // Close fullscreen overlay
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('[data-event*="closeFullscreen"]') || 
+                    (e.target === fullscreenOverlay && !e.target.closest('.recipe-card-full'))) {
+                    e.preventDefault();
+                    fullscreenOverlay.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                }
+            });
+            
+            // Prevent overlay close when clicking inside the card
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('[data-event*="stopPropagation"]')) {
+                    e.stopPropagation();
+                }
+            });
+            
+            // Demo edit mode toggle
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('[data-event*="toggleEditMode"]')) {
+                    e.preventDefault();
+                    const editElements = document.querySelectorAll('[data-edit-mode="true"]');
+                    const readonlyElements = document.querySelectorAll('textarea[readonly]');
+                    
+                    editElements.forEach(el => {
+                        el.classList.toggle('hidden');
+                    });
+                    
+                    readonlyElements.forEach(el => {
+                        el.readOnly = !el.readOnly;
+                        if (!el.readOnly) {
+                            el.classList.add('edit-mode');
+                        } else {
+                            el.classList.remove('edit-mode');
+                        }
+                    });
+                }
+            });
+            
+            // Demo drag and drop visual feedback
+            document.addEventListener('mousedown', function(e) {
+                const gripHandle = e.target.closest('.fa-grip-vertical');
+                if (gripHandle) {
+                    const card = gripHandle.closest('.thumbnail-card');
+                    if (card) {
+                        card.classList.add('dragging');
+                        
+                        document.addEventListener('mouseup', function() {
+                            card.classList.remove('dragging');
+                        }, { once: true });
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,636 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Keeper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    border: "var(--border)",
+                    ring: "var(--ring)",
+                },
+                fontFamily: {
+                    sans: ["var(--font-sans)"],
+                },
+                aspectRatio: {
+                    'recipe': '3 / 5',
+                }
+            },
+        }
+    };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --background: hsl(42 15% 98%);
+            --foreground: hsl(20 4% 17%);
+            --card: hsl(60 5% 96%);
+            --card-foreground: hsl(20 4% 17%);
+            --primary: hsl(142 25% 55%);
+            --primary-foreground: hsl(0 0% 100%);
+            --secondary: hsl(60 5% 90%);
+            --secondary-foreground: hsl(20 4% 17%);
+            --muted: hsl(60 5% 93%);
+            --muted-foreground: hsl(20 4% 45%);
+            --accent: hsl(142 25% 88%);
+            --accent-foreground: hsl(20 4% 17%);
+            --border: hsl(60 5% 85%);
+            --ring: hsl(142 25% 55%);
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --radius: 8px;
+        }
+
+        * {
+            border-color: var(--border);
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--background);
+            color: var(--foreground);
+        }
+
+        .recipe-card {
+            aspect-ratio: 3 / 5;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .stack-card {
+            aspect-ratio: 3 / 5;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stack-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stack-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+        }
+
+        .stack-layer:nth-child(1) {
+            transform: translateY(0px) translateX(0px);
+            z-index: 3;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .stack-layer:nth-child(2) {
+            transform: translateY(-3px) translateX(-2px);
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stack-layer:nth-child(3) {
+            transform: translateY(-6px) translateX(-4px);
+            z-index: 1;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .full-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            margin: 2rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .ingredient-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0;
+        }
+
+        .ingredient-item input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            accent-color: var(--primary);
+        }
+
+        .drag-handle {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            cursor: grab;
+        }
+
+        .recipe-card:hover .drag-handle,
+        .stack-card:hover .drag-handle {
+            opacity: 1;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+                padding: 0 1rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header Section -->
+    <header class="py-8 px-4">
+        <div class="text-center max-w-4xl mx-auto">
+            <h1 class="text-4xl font-bold text-foreground mb-6">Recipe Keeper</h1>
+            <div class="flex flex-wrap justify-center gap-4">
+                <button class="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2">
+                    <i class="fas fa-plus"></i>
+                    New Recipe
+                </button>
+                <button class="bg-secondary text-secondary-foreground px-6 py-3 rounded-lg font-medium hover:bg-secondary/80 transition-colors flex items-center gap-2">
+                    <i class="fas fa-layer-group"></i>
+                    New Stack
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Grid -->
+    <main class="pb-12">
+        <div class="grid-container">
+            <!-- @COMPONENT: RecipeCard -->
+            <!-- Sample Recipe Cards -->
+            <div class="recipe-card" data-mock="true" onclick="openRecipeModal('grandmas-cookies')">
+                <div class="p-4 h-full flex flex-col">
+                    <div class="drag-handle text-muted-foreground">
+                        <i class="fas fa-grip-dots-vertical"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 line-clamp-2">Grandma's Chocolate Chip Cookies</h3>
+                    <p class="text-muted-foreground text-sm flex-1 line-clamp-4">The perfect chewy cookies with crispy edges. A family recipe passed down through generations with the secret ingredient of...</p>
+                    <div class="mt-auto pt-2">
+                        <span class="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Dessert</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- @COMPONENT: StackCard -->
+            <!-- Sample Stack -->
+            <div class="stack-card" data-mock="true" onclick="expandStack('italian-recipes')">
+                <div class="stack-layer"></div>
+                <div class="stack-layer"></div>
+                <div class="stack-layer">
+                    <div class="p-4 h-full flex flex-col">
+                        <div class="drag-handle text-muted-foreground" style="z-index: 10;">
+                            <i class="fas fa-grip-dots-vertical"></i>
+                        </div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas fa-layer-group text-primary"></i>
+                            <h3 class="font-semibold text-lg">Italian Recipes</h3>
+                        </div>
+                        <p class="text-muted-foreground text-sm flex-1">Collection of authentic Italian dishes</p>
+                        <div class="mt-auto pt-2">
+                            <span class="text-xs text-muted-foreground bg-accent px-2 py-1 rounded">8 recipes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- More Recipe Cards -->
+            <div class="recipe-card" data-mock="true" onclick="openRecipeModal('banana-bread')">
+                <div class="p-4 h-full flex flex-col">
+                    <div class="drag-handle text-muted-foreground">
+                        <i class="fas fa-grip-dots-vertical"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 line-clamp-2">Moist Banana Bread</h3>
+                    <p class="text-muted-foreground text-sm flex-1 line-clamp-4">Super moist and flavorful banana bread that's perfect for breakfast or as a snack. Uses overripe bananas for maximum sweetness.</p>
+                    <div class="mt-auto pt-2">
+                        <span class="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Bread</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recipe-card" data-mock="true" onclick="openRecipeModal('chicken-parmesan')">
+                <div class="p-4 h-full flex flex-col">
+                    <div class="drag-handle text-muted-foreground">
+                        <i class="fas fa-grip-dots-vertical"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 line-clamp-2">Crispy Chicken Parmesan</h3>
+                    <p class="text-muted-foreground text-sm flex-1 line-clamp-4">Golden breaded chicken breast topped with marinara sauce and melted mozzarella cheese. Served over pasta for a complete meal.</p>
+                    <div class="mt-auto pt-2">
+                        <span class="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Main Course</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Another Stack -->
+            <div class="stack-card" data-mock="true" onclick="expandStack('desserts')">
+                <div class="stack-layer"></div>
+                <div class="stack-layer"></div>
+                <div class="stack-layer">
+                    <div class="p-4 h-full flex flex-col">
+                        <div class="drag-handle text-muted-foreground" style="z-index: 10;">
+                            <i class="fas fa-grip-dots-vertical"></i>
+                        </div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <i class="fas fa-layer-group text-primary"></i>
+                            <h3 class="font-semibold text-lg">Sweet Treats</h3>
+                        </div>
+                        <p class="text-muted-foreground text-sm flex-1">Desserts and sweet snacks for every occasion</p>
+                        <div class="mt-auto pt-2">
+                            <span class="text-xs text-muted-foreground bg-accent px-2 py-1 rounded">12 recipes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Recipe Cards for demonstration -->
+            <div class="recipe-card" data-mock="true" onclick="openRecipeModal('veggie-stir-fry')">
+                <div class="p-4 h-full flex flex-col">
+                    <div class="drag-handle text-muted-foreground">
+                        <i class="fas fa-grip-dots-vertical"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 line-clamp-2">Colorful Veggie Stir Fry</h3>
+                    <p class="text-muted-foreground text-sm flex-1 line-clamp-4">Quick and healthy stir fry with fresh vegetables in a savory sauce. Perfect for weeknight dinners when you want something nutritious.</p>
+                    <div class="mt-auto pt-2">
+                        <span class="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Vegetarian</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recipe-card" data-mock="true" onclick="openRecipeModal('beef-tacos')">
+                <div class="p-4 h-full flex flex-col">
+                    <div class="drag-handle text-muted-foreground">
+                        <i class="fas fa-grip-dots-vertical"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 line-clamp-2">Seasoned Beef Tacos</h3>
+                    <p class="text-muted-foreground text-sm flex-1 line-clamp-4">Perfectly seasoned ground beef tacos with all the fixings. A family favorite that's easy to make and always satisfying.</p>
+                    <div class="mt-auto pt-2">
+                        <span class="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Mexican</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recipe-card" data-mock="true" onclick="openRecipeModal('caesar-salad')">
+                <div class="p-4 h-full flex flex-col">
+                    <div class="drag-handle text-muted-foreground">
+                        <i class="fas fa-grip-dots-vertical"></i>
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 line-clamp-2">Classic Caesar Salad</h3>
+                    <p class="text-muted-foreground text-sm flex-1 line-clamp-4">Crisp romaine lettuce with homemade caesar dressing, parmesan cheese, and crunchy croutons. A timeless favorite.</p>
+                    <div class="mt-auto pt-2">
+                        <span class="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Salad</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty slots for demonstration -->
+            <div class="recipe-card border-dashed border-2 border-border bg-muted/20" onclick="createNewRecipe()">
+                <div class="p-4 h-full flex flex-col items-center justify-center text-muted-foreground">
+                    <i class="fas fa-plus text-3xl mb-2"></i>
+                    <p class="text-sm">Add New Recipe</p>
+                </div>
+            </div>
+
+            <!-- Fill remaining grid slots -->
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </main>
+
+    <!-- Full Screen Recipe Modal -->
+    <div id="recipeModal" class="overlay hidden" onclick="closeRecipeModal()">
+        <div class="full-card" onclick="event.stopPropagation()">
+            <div class="p-6">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-foreground" data-bind="recipe.title">Grandma's Chocolate Chip Cookies</h2>
+                    <div class="flex gap-2">
+                        <button id="editButton" class="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg font-medium hover:bg-secondary/80 transition-colors" onclick="toggleEditMode()">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="text-muted-foreground hover:text-foreground transition-colors" onclick="closeRecipeModal()">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recipe Description -->
+                <div class="mb-6">
+                    <h3 class="font-semibold text-lg mb-2">Description</h3>
+                    <div id="descriptionView" class="text-muted-foreground" data-bind="recipe.description">
+                        The perfect chewy cookies with crispy edges. A family recipe passed down through generations with the secret ingredient of brown butter that gives these cookies their unique nutty flavor and irresistible aroma.
+                    </div>
+                    <textarea id="descriptionEdit" class="w-full p-3 border border-border rounded-lg resize-none hidden" rows="3" data-implementation="Should bind to recipe.description state">The perfect chewy cookies with crispy edges. A family recipe passed down through generations with the secret ingredient of brown butter that gives these cookies their unique nutty flavor and irresistible aroma.</textarea>
+                </div>
+
+                <!-- Ingredients Section -->
+                <div class="mb-6">
+                    <h3 class="font-semibold text-lg mb-3">Ingredients</h3>
+                    <div id="ingredientsView" class="space-y-2" data-mock="true">
+                        <!-- @MAP: recipe.ingredients.map(ingredient => ( -->
+                        <div class="ingredient-item">
+                            <input type="checkbox" data-bind="ingredient.checked">
+                            <span data-bind="ingredient.text">2 1/4 cups all-purpose flour</span>
+                        </div>
+                        <div class="ingredient-item">
+                            <input type="checkbox" data-bind="ingredient.checked">
+                            <span data-bind="ingredient.text">1 tsp baking soda</span>
+                        </div>
+                        <div class="ingredient-item">
+                            <input type="checkbox" data-bind="ingredient.checked">
+                            <span data-bind="ingredient.text">1 tsp salt</span>
+                        </div>
+                        <div class="ingredient-item">
+                            <input type="checkbox" data-bind="ingredient.checked">
+                            <span data-bind="ingredient.text">1 cup butter, softened</span>
+                        </div>
+                        <div class="ingredient-item">
+                            <input type="checkbox" data-bind="ingredient.checked">
+                            <span data-bind="ingredient.text">3/4 cup granulated sugar</span>
+                        </div>
+                        <div class="ingredient-item">
+                            <input type="checkbox" data-bind="ingredient.checked">
+                            <span data-bind="ingredient.text">3/4 cup packed brown sugar</span>
+                        </div>
+                        <div class="ingredient-item">
+                            <input type="checkbox" data-bind="ingredient.checked">
+                            <span data-bind="ingredient.text">2 large eggs</span>
+                        </div>
+                        <div class="ingredient-item">
+                            <input type="checkbox" data-bind="ingredient.checked">
+                            <span data-bind="ingredient.text">2 tsp vanilla extract</span>
+                        </div>
+                        <div class="ingredient-item">
+                            <input type="checkbox" data-bind="ingredient.checked">
+                            <span data-bind="ingredient.text">2 cups chocolate chips</span>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                    <div id="ingredientsEdit" class="hidden">
+                        <textarea class="w-full p-3 border border-border rounded-lg resize-none" rows="8" placeholder="Enter ingredients, one per line" data-implementation="Should parse ingredients into checkable list">2 1/4 cups all-purpose flour
+1 tsp baking soda
+1 tsp salt
+1 cup butter, softened
+3/4 cup granulated sugar
+3/4 cup packed brown sugar
+2 large eggs
+2 tsp vanilla extract
+2 cups chocolate chips</textarea>
+                    </div>
+                </div>
+
+                <!-- Directions Section -->
+                <div class="mb-6">
+                    <h3 class="font-semibold text-lg mb-3">Directions</h3>
+                    <div id="directionsView" class="text-muted-foreground leading-relaxed" data-bind="recipe.directions">
+                        <p class="mb-3">1. Preheat oven to 375°F (190°C). Line baking sheets with parchment paper.</p>
+                        <p class="mb-3">2. In a medium bowl, whisk together flour, baking soda, and salt. Set aside.</p>
+                        <p class="mb-3">3. In a large bowl, cream together the softened butter, granulated sugar, and brown sugar until light and fluffy, about 2-3 minutes.</p>
+                        <p class="mb-3">4. Beat in eggs one at a time, then stir in vanilla extract.</p>
+                        <p class="mb-3">5. Gradually blend in the flour mixture until just combined. Stir in chocolate chips.</p>
+                        <p class="mb-3">6. Drop rounded tablespoons of dough onto prepared baking sheets, spacing them about 2 inches apart.</p>
+                        <p class="mb-3">7. Bake for 9-11 minutes or until golden brown around the edges. Centers will look slightly underbaked.</p>
+                        <p>8. Cool on baking sheet for 5 minutes before transferring to wire rack. Enjoy warm or store in airtight container.</p>
+                    </div>
+                    <textarea id="directionsEdit" class="w-full p-3 border border-border rounded-lg resize-none hidden" rows="10" data-implementation="Should bind to recipe.directions state">1. Preheat oven to 375°F (190°C). Line baking sheets with parchment paper.
+
+2. In a medium bowl, whisk together flour, baking soda, and salt. Set aside.
+
+3. In a large bowl, cream together the softened butter, granulated sugar, and brown sugar until light and fluffy, about 2-3 minutes.
+
+4. Beat in eggs one at a time, then stir in vanilla extract.
+
+5. Gradually blend in the flour mixture until just combined. Stir in chocolate chips.
+
+6. Drop rounded tablespoons of dough onto prepared baking sheets, spacing them about 2 inches apart.
+
+7. Bake for 9-11 minutes or until golden brown around the edges. Centers will look slightly underbaked.
+
+8. Cool on baking sheet for 5 minutes before transferring to wire rack. Enjoy warm or store in airtight container.</textarea>
+                </div>
+
+                <!-- Save/Cancel Buttons (shown in edit mode) -->
+                <div id="editActions" class="flex gap-3 pt-4 border-t border-border hidden">
+                    <button class="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors" onclick="saveRecipe()">
+                        Save Changes
+                    </button>
+                    <button class="bg-secondary text-secondary-foreground px-6 py-2 rounded-lg font-medium hover:bg-secondary/80 transition-colors" onclick="cancelEdit()">
+                        Cancel
+                    </button>
+                    <button class="bg-destructive text-destructive-foreground px-6 py-2 rounded-lg font-medium hover:bg-destructive/90 transition-colors ml-auto" onclick="deleteRecipe()">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modal functionality
+        let isEditMode = false;
+
+        function openRecipeModal(recipeId) {
+            // TODO: Load recipe data from state/localStorage based on recipeId
+            document.getElementById('recipeModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeRecipeModal() {
+            document.getElementById('recipeModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            if (isEditMode) {
+                cancelEdit();
+            }
+        }
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            
+            const viewElements = ['descriptionView', 'ingredientsView', 'directionsView'];
+            const editElements = ['descriptionEdit', 'ingredientsEdit', 'directionsEdit'];
+            const editButton = document.getElementById('editButton');
+            const editActions = document.getElementById('editActions');
+
+            if (isEditMode) {
+                viewElements.forEach(id => document.getElementById(id).classList.add('hidden'));
+                editElements.forEach(id => document.getElementById(id).classList.remove('hidden'));
+                editButton.innerHTML = '<i class="fas fa-eye"></i> View';
+                editActions.classList.remove('hidden');
+            } else {
+                viewElements.forEach(id => document.getElementById(id).classList.remove('hidden'));
+                editElements.forEach(id => document.getElementById(id).classList.add('hidden'));
+                editButton.innerHTML = '<i class="fas fa-edit"></i> Edit';
+                editActions.classList.add('hidden');
+            }
+        }
+
+        function saveRecipe() {
+            // TODO: Save recipe changes to state/localStorage
+            toggleEditMode();
+            // Show success message
+            console.log('Recipe saved successfully');
+        }
+
+        function cancelEdit() {
+            // TODO: Revert any unsaved changes
+            if (isEditMode) {
+                toggleEditMode();
+            }
+        }
+
+        function deleteRecipe() {
+            if (confirm('Are you sure you want to delete this recipe?')) {
+                // TODO: Remove recipe from state/localStorage
+                closeRecipeModal();
+                console.log('Recipe deleted');
+            }
+        }
+
+        function createNewRecipe() {
+            // TODO: Create new empty recipe and open in edit mode
+            console.log('Creating new recipe');
+        }
+
+        function expandStack(stackId) {
+            // TODO: Implement stack fan-out animation and show recipes in stack
+            console.log('Expanding stack:', stackId);
+        }
+
+        // Drag and drop functionality placeholder
+        // TODO: Implement with react-beautiful-dnd or similar library
+        console.log('Drag and drop functionality to be implemented with React');
+
+        // Close modal when clicking outside
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeRecipeModal();
+            }
+        });
+
+        // Ingredient checkbox functionality
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox' && e.target.closest('.ingredient-item')) {
+                const span = e.target.nextElementSibling;
+                if (e.target.checked) {
+                    span.style.textDecoration = 'line-through';
+                    span.style.opacity = '0.6';
+                } else {
+                    span.style.textDecoration = 'none';
+                    span.style.opacity = '1';
+                }
+                // TODO: Save ingredient checked state to localStorage
+            }
+        });
+    </script>
+</body>
+</html>

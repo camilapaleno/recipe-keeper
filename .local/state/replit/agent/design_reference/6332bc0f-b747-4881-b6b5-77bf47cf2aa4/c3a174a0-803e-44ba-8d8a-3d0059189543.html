@@ -1,0 +1,596 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Keeper - Organize Your Recipes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                    paper: "var(--paper)",
+                    notebook: "var(--notebook)",
+                },
+                fontFamily: {
+                    sans: ["var(--font-sans)"],
+                }
+            },
+        }
+    };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --radius: 8px;
+            --background: hsl(60 9% 98%);
+            --foreground: hsl(20 14% 11%);
+            --card: hsl(60 9% 98%);
+            --card-foreground: hsl(20 14% 11%);
+            --primary: hsl(217 91% 60%);
+            --primary-foreground: hsl(0 0% 98%);
+            --secondary: hsl(215 16% 47%);
+            --secondary-foreground: hsl(210 40% 2%);
+            --muted: hsl(215 28% 94%);
+            --muted-foreground: hsl(215 16% 47%);
+            --accent: hsl(43 96% 56%);
+            --accent-foreground: hsl(20 14% 11%);
+            --destructive: hsl(0 84% 60%);
+            --destructive-foreground: hsl(0 0% 98%);
+            --border: hsl(220 13% 91%);
+            --input: hsl(220 13% 91%);
+            --ring: hsl(217 91% 60%);
+            --paper: hsl(48 100% 99%);
+            --notebook: hsl(25 47% 86%);
+            --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        }
+
+        .recipe-card {
+            aspect-ratio: 3/5;
+            background: linear-gradient(135deg, hsl(var(--paper)) 0%, hsl(48 50% 97%) 100%);
+            box-shadow: 
+                0 1px 3px rgba(0, 0, 0, 0.12),
+                0 1px 2px rgba(0, 0, 0, 0.24),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+
+        .notebook-stack {
+            aspect-ratio: 3/5;
+            background: linear-gradient(135deg, hsl(var(--notebook)) 0%, hsl(25 47% 80%) 100%);
+            position: relative;
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.15),
+                0 4px 8px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .notebook-stack::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 4px;
+            bottom: 4px;
+            background: linear-gradient(135deg, hsl(25 47% 88%) 0%, hsl(25 47% 82%) 100%);
+            border-radius: 6px;
+            z-index: -1;
+        }
+
+        .notebook-stack::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 8px;
+            bottom: 8px;
+            background: linear-gradient(135deg, hsl(25 47% 90%) 0%, hsl(25 47% 84%) 100%);
+            border-radius: 4px;
+            z-index: -2;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-container {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+        }
+
+        .drag-handle {
+            cursor: grab;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .overlay-backdrop {
+            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .paper-texture {
+            background-image: 
+                radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0);
+            background-size: 20px 20px;
+        }
+
+        .ingredient-checkbox:checked {
+            background-color: hsl(var(--primary));
+            border-color: hsl(var(--primary));
+        }
+
+        .ingredient-checkbox:checked + label {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground font-sans">
+    <!-- @COMPONENT: Header -->
+    <header class="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-utensils text-2xl text-primary"></i>
+                    <h1 class="text-xl font-semibold text-foreground">Recipe Keeper</h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button class="flex items-center space-x-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                        <i class="fas fa-plus text-sm"></i>
+                        <span class="hidden sm:inline">New Recipe</span>
+                    </button>
+                    <button class="flex items-center space-x-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors">
+                        <i class="fas fa-layer-group text-sm"></i>
+                        <span class="hidden sm:inline">New Stack</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <!-- @COMPONENT: MainContent -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- @COMPONENT: RecipeGrid -->
+        <div class="grid-container" data-implementation="Implement drag-and-drop with react-beautiful-dnd">
+            
+            <!-- @COMPONENT: RecipeCard (Sample 1) -->
+            <div class="recipe-card rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all duration-200 drag-handle border border-border/50" 
+                 data-event="click:openFullView" data-mock="true">
+                <div class="h-full flex flex-col">
+                    <div class="flex-1 mb-3">
+                        <!-- Mock recipe image placeholder -->
+                        <div class="w-full h-16 bg-muted/30 rounded-md mb-3 flex items-center justify-center">
+                            <i class="fas fa-image text-muted-foreground text-lg"></i>
+                        </div>
+                        <h3 class="font-medium text-sm mb-2 line-clamp-2" data-bind="recipe.title">Grandma's Chocolate Chip Cookies</h3>
+                        <p class="text-xs text-muted-foreground line-clamp-3" data-bind="recipe.description">
+                            Classic homemade cookies with crispy edges and chewy centers. Perfect for any occasion.
+                        </p>
+                    </div>
+                    <div class="flex items-center justify-between text-xs text-muted-foreground">
+                        <span data-bind="recipe.servings">24 cookies</span>
+                        <span data-bind="recipe.time">45 min</span>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: RecipeCard -->
+
+            <!-- @COMPONENT: NotebookStack (Sample) -->
+            <div class="notebook-stack rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all duration-200 drag-handle" 
+                 data-event="click:expandStack" data-mock="true">
+                <div class="h-full flex flex-col justify-between relative z-10">
+                    <div>
+                        <div class="w-8 h-1 bg-muted-foreground/20 rounded mb-2"></div>
+                        <h3 class="font-medium text-sm mb-1" data-bind="stack.name">Holiday Recipes</h3>
+                        <p class="text-xs text-muted-foreground" data-bind="stack.count">8 recipes</p>
+                    </div>
+                    <div class="flex justify-end">
+                        <i class="fas fa-folder text-muted-foreground/40"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: NotebookStack -->
+
+            <!-- @COMPONENT: RecipeCard (Sample 2) -->
+            <div class="recipe-card rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all duration-200 drag-handle border border-border/50" 
+                 data-mock="true">
+                <div class="h-full flex flex-col">
+                    <div class="flex-1 mb-3">
+                        <div class="w-full h-16 bg-muted/30 rounded-md mb-3 flex items-center justify-center">
+                            <i class="fas fa-image text-muted-foreground text-lg"></i>
+                        </div>
+                        <h3 class="font-medium text-sm mb-2 line-clamp-2">Spicy Thai Curry</h3>
+                        <p class="text-xs text-muted-foreground line-clamp-3">
+                            Rich and aromatic Thai curry with coconut milk, vegetables, and fragrant spices.
+                        </p>
+                    </div>
+                    <div class="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>4 servings</span>
+                        <span>30 min</span>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: RecipeCard -->
+
+            <!-- Additional placeholder cards -->
+            <div class="recipe-card rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all duration-200 drag-handle border border-border/50" data-mock="true">
+                <div class="h-full flex flex-col">
+                    <div class="flex-1 mb-3">
+                        <div class="w-full h-16 bg-muted/30 rounded-md mb-3 flex items-center justify-center">
+                            <i class="fas fa-image text-muted-foreground text-lg"></i>
+                        </div>
+                        <h3 class="font-medium text-sm mb-2 line-clamp-2">Mediterranean Pasta</h3>
+                        <p class="text-xs text-muted-foreground line-clamp-3">Fresh basil, tomatoes, and olive oil create this light summer dish.</p>
+                    </div>
+                    <div class="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>6 servings</span>
+                        <span>25 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="notebook-stack rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all duration-200 drag-handle" data-mock="true">
+                <div class="h-full flex flex-col justify-between relative z-10">
+                    <div>
+                        <div class="w-8 h-1 bg-muted-foreground/20 rounded mb-2"></div>
+                        <h3 class="font-medium text-sm mb-1">Quick Meals</h3>
+                        <p class="text-xs text-muted-foreground">12 recipes</p>
+                    </div>
+                    <div class="flex justify-end">
+                        <i class="fas fa-folder text-muted-foreground/40"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty slot indicators -->
+            <div class="aspect-[3/5] border-2 border-dashed border-border rounded-lg flex items-center justify-center text-muted-foreground hover:border-primary/50 transition-colors cursor-pointer" data-implementation="Drop zone for new items">
+                <div class="text-center">
+                    <i class="fas fa-plus text-2xl mb-2 block"></i>
+                    <span class="text-xs">Add Recipe</span>
+                </div>
+            </div>
+
+            <!-- Fill remaining grid spaces with empty slots -->
+            <div class="aspect-[3/5] border-2 border-dashed border-border/30 rounded-lg"></div>
+            <div class="aspect-[3/5] border-2 border-dashed border-border/30 rounded-lg"></div>
+            <div class="aspect-[3/5] border-2 border-dashed border-border/30 rounded-lg"></div>
+            <div class="aspect-[3/5] border-2 border-dashed border-border/30 rounded-lg"></div>
+            
+        </div>
+        <!-- @END_COMPONENT: RecipeGrid -->
+    </main>
+    <!-- @END_COMPONENT: MainContent -->
+
+    <!-- @COMPONENT: FullScreenRecipeOverlay -->
+    <div class="fixed inset-0 overlay-backdrop z-50 flex items-center justify-center p-4" 
+         style="display: none;" 
+         data-state="closed" 
+         data-implementation="Toggle visibility based on selected recipe">
+        
+        <div class="bg-paper rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden paper-texture">
+            <!-- Recipe Header -->
+            <div class="flex items-center justify-between p-6 border-b border-border/50">
+                <div class="flex items-center space-x-4">
+                    <h2 class="text-2xl font-semibold" data-bind="selectedRecipe.title">Grandma's Chocolate Chip Cookies</h2>
+                    <button class="text-muted-foreground hover:text-primary transition-colors" data-event="click:toggleEditMode">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
+                <button class="text-muted-foreground hover:text-foreground transition-colors" data-event="click:closeFullView">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div class="flex flex-col lg:flex-row h-full max-h-[calc(90vh-80px)]">
+                <!-- Left Column - Description and Ingredients -->
+                <div class="flex-1 p-6 overflow-y-auto">
+                    <div class="space-y-6">
+                        <!-- Description -->
+                        <div>
+                            <h3 class="text-lg font-medium mb-3">Description</h3>
+                            <div class="bg-background/50 rounded-lg p-4">
+                                <p class="text-muted-foreground leading-relaxed" data-bind="selectedRecipe.description" data-mock="true">
+                                    These classic chocolate chip cookies have been passed down through three generations. 
+                                    They feature the perfect balance of crispy edges and chewy centers, with plenty of 
+                                    chocolate chips in every bite. The secret is in the brown butter technique that adds 
+                                    a nutty depth of flavor.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Ingredients -->
+                        <div>
+                            <h3 class="text-lg font-medium mb-3">Ingredients</h3>
+                            <div class="space-y-2" data-implementation="Map through ingredients array">
+                                <!-- @MAP: ingredients.map(ingredient => ( -->
+                                <label class="flex items-center space-x-3 cursor-pointer group">
+                                    <input type="checkbox" class="ingredient-checkbox w-4 h-4 rounded border-border focus:ring-2 focus:ring-ring transition-colors">
+                                    <span class="text-sm group-hover:text-foreground transition-colors" data-bind="ingredient.text" data-mock="true">2 ¼ cups all-purpose flour</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer group">
+                                    <input type="checkbox" class="ingredient-checkbox w-4 h-4 rounded border-border focus:ring-2 focus:ring-ring transition-colors">
+                                    <span class="text-sm group-hover:text-foreground transition-colors" data-mock="true">1 tsp baking soda</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer group">
+                                    <input type="checkbox" class="ingredient-checkbox w-4 h-4 rounded border-border focus:ring-2 focus:ring-ring transition-colors">
+                                    <span class="text-sm group-hover:text-foreground transition-colors" data-mock="true">1 tsp salt</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer group">
+                                    <input type="checkbox" class="ingredient-checkbox w-4 h-4 rounded border-border focus:ring-2 focus:ring-ring transition-colors">
+                                    <span class="text-sm group-hover:text-foreground transition-colors" data-mock="true">1 cup (2 sticks) butter, softened</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer group">
+                                    <input type="checkbox" class="ingredient-checkbox w-4 h-4 rounded border-border focus:ring-2 focus:ring-ring transition-colors">
+                                    <span class="text-sm group-hover:text-foreground transition-colors" data-mock="true">¾ cup granulated sugar</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer group">
+                                    <input type="checkbox" class="ingredient-checkbox w-4 h-4 rounded border-border focus:ring-2 focus:ring-ring transition-colors">
+                                    <span class="text-sm group-hover:text-foreground transition-colors" data-mock="true">¾ cup packed brown sugar</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer group">
+                                    <input type="checkbox" class="ingredient-checkbox w-4 h-4 rounded border-border focus:ring-2 focus:ring-ring transition-colors">
+                                    <span class="text-sm group-hover:text-foreground transition-colors" data-mock="true">2 large eggs</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer group">
+                                    <input type="checkbox" class="ingredient-checkbox w-4 h-4 rounded border-border focus:ring-2 focus:ring-ring transition-colors">
+                                    <span class="text-sm group-hover:text-foreground transition-colors" data-mock="true">2 tsp vanilla extract</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer group">
+                                    <input type="checkbox" class="ingredient-checkbox w-4 h-4 rounded border-border focus:ring-2 focus:ring-ring transition-colors">
+                                    <span class="text-sm group-hover:text-foreground transition-colors" data-mock="true">2 cups chocolate chips</span>
+                                </label>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Directions -->
+                <div class="flex-1 p-6 border-l border-border/50 overflow-y-auto">
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-medium">Directions</h3>
+                        <div class="bg-background/50 rounded-lg p-4">
+                            <div class="prose prose-sm max-w-none text-muted-foreground" data-bind="selectedRecipe.directions" data-mock="true">
+                                <ol class="space-y-3">
+                                    <li>Preheat oven to 375°F (190°C). Line baking sheets with parchment paper.</li>
+                                    <li>In a medium bowl, whisk together flour, baking soda, and salt. Set aside.</li>
+                                    <li>In a large bowl, cream together the softened butter, granulated sugar, and brown sugar until light and fluffy, about 3-4 minutes.</li>
+                                    <li>Beat in eggs one at a time, then stir in vanilla extract.</li>
+                                    <li>Gradually blend in the flour mixture until just combined. Don't overmix.</li>
+                                    <li>Stir in chocolate chips until evenly distributed.</li>
+                                    <li>Drop rounded tablespoons of dough onto prepared baking sheets, spacing them about 2 inches apart.</li>
+                                    <li>Bake for 9-11 minutes or until golden brown around the edges but still soft in the center.</li>
+                                    <li>Cool on baking sheet for 2 minutes, then transfer to a wire rack to cool completely.</li>
+                                    <li>Store in an airtight container for up to one week.</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <!-- Recipe Metadata -->
+                        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
+                            <div class="text-center">
+                                <div class="text-2xl font-semibold text-primary" data-bind="selectedRecipe.prepTime">45</div>
+                                <div class="text-xs text-muted-foreground">minutes</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-semibold text-primary" data-bind="selectedRecipe.servings">24</div>
+                                <div class="text-xs text-muted-foreground">cookies</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: FullScreenRecipeOverlay -->
+
+    <!-- @COMPONENT: StackExpandedView -->
+    <div class="fixed inset-0 overlay-backdrop z-50 flex items-center justify-center p-4" 
+         style="display: none;" 
+         data-state="closed" 
+         data-implementation="Toggle visibility when stack is clicked">
+        
+        <div class="bg-card rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
+            <!-- Stack Header -->
+            <div class="flex items-center justify-between p-6 border-b border-border">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-layer-group text-2xl text-primary"></i>
+                    <div>
+                        <h2 class="text-2xl font-semibold" data-bind="selectedStack.name">Holiday Recipes</h2>
+                        <p class="text-sm text-muted-foreground" data-bind="selectedStack.description">Special recipes for holidays and celebrations</p>
+                    </div>
+                </div>
+                <button class="text-muted-foreground hover:text-foreground transition-colors" data-event="click:closeStackView">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Stack Content -->
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-implementation="Map through stack recipes">
+                    <!-- @MAP: stackRecipes.map(recipe => ( -->
+                    <div class="recipe-card rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all duration-200 border border-border/50" data-mock="true">
+                        <div class="h-full flex flex-col">
+                            <div class="flex-1 mb-3">
+                                <div class="w-full h-20 bg-muted/30 rounded-md mb-3 flex items-center justify-center">
+                                    <i class="fas fa-image text-muted-foreground text-xl"></i>
+                                </div>
+                                <h3 class="font-medium text-sm mb-2 line-clamp-2">Christmas Sugar Cookies</h3>
+                                <p class="text-xs text-muted-foreground line-clamp-2">
+                                    Festive sugar cookies perfect for decorating and gifting.
+                                </p>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>36 cookies</span>
+                                <span>2 hours</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recipe-card rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all duration-200 border border-border/50" data-mock="true">
+                        <div class="h-full flex flex-col">
+                            <div class="flex-1 mb-3">
+                                <div class="w-full h-20 bg-muted/30 rounded-md mb-3 flex items-center justify-center">
+                                    <i class="fas fa-image text-muted-foreground text-xl"></i>
+                                </div>
+                                <h3 class="font-medium text-sm mb-2 line-clamp-2">Thanksgiving Turkey</h3>
+                                <p class="text-xs text-muted-foreground line-clamp-2">
+                                    Herb-roasted turkey with cranberry stuffing.
+                                </p>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>8 servings</span>
+                                <span>4 hours</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recipe-card rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all duration-200 border border-border/50" data-mock="true">
+                        <div class="h-full flex flex-col">
+                            <div class="flex-1 mb-3">
+                                <div class="w-full h-20 bg-muted/30 rounded-md mb-3 flex items-center justify-center">
+                                    <i class="fas fa-image text-muted-foreground text-xl"></i>
+                                </div>
+                                <h3 class="font-medium text-sm mb-2 line-clamp-2">Easter Ham Glaze</h3>
+                                <p class="text-xs text-muted-foreground line-clamp-2">
+                                    Sweet and tangy glaze for holiday ham.
+                                </p>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>10 servings</span>
+                                <span>15 min</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_MAP )) -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: StackExpandedView -->
+
+    <script>
+        // TODO: Implement React hooks for state management
+        // TODO: Implement drag-and-drop with react-beautiful-dnd
+        // TODO: Implement localStorage persistence
+        // TODO: Add form validation and error handling
+        
+        (function() {
+            // Demo functionality for the mockup
+            let isFullViewOpen = false;
+            let isStackViewOpen = false;
+            
+            // Toggle full recipe view
+            function toggleFullView() {
+                const overlay = document.querySelector('[data-state="closed"]');
+                if (overlay) {
+                    isFullViewOpen = !isFullViewOpen;
+                    overlay.style.display = isFullViewOpen ? 'flex' : 'none';
+                }
+            }
+            
+            // Close overlays when clicking backdrop
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('overlay-backdrop')) {
+                    const overlays = document.querySelectorAll('.overlay-backdrop');
+                    overlays.forEach(overlay => {
+                        overlay.style.display = 'none';
+                    });
+                    isFullViewOpen = false;
+                    isStackViewOpen = false;
+                }
+            });
+            
+            // Add click handlers to recipe cards
+            const recipeCards = document.querySelectorAll('.recipe-card');
+            recipeCards.forEach(card => {
+                card.addEventListener('click', toggleFullView);
+            });
+            
+            // Add click handlers to notebook stacks
+            const stacks = document.querySelectorAll('.notebook-stack');
+            stacks.forEach(stack => {
+                stack.addEventListener('click', function() {
+                    const stackOverlay = document.querySelectorAll('.overlay-backdrop')[1];
+                    if (stackOverlay) {
+                        stackOverlay.style.display = 'flex';
+                        isStackViewOpen = true;
+                    }
+                });
+            });
+            
+            // Close buttons
+            const closeButtons = document.querySelectorAll('[data-event*="close"]');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const overlays = document.querySelectorAll('.overlay-backdrop');
+                    overlays.forEach(overlay => {
+                        overlay.style.display = 'none';
+                    });
+                    isFullViewOpen = false;
+                    isStackViewOpen = false;
+                });
+            });
+        })();
+    </script>
+</body>
+</html>
