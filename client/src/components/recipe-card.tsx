@@ -205,7 +205,7 @@ export default function RecipeCard({ recipe, onClick, isDragDisabled, onDragStar
               data-testid={`image-recipe-${recipe.id}`}
             />
             <img 
-              src="/assets/paperclip-icon.png" 
+              src={`${import.meta.env.BASE_URL}assets/paperclip-icon.png`}
               alt="paperclip"
               className="absolute -right-5 top-1/2 -translate-y-1/2 w-12 h-5" 
               data-testid={`paperclip-recipe-${recipe.id}`}

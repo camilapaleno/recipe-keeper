@@ -242,7 +242,8 @@
   }
 
   .full-card {
-    @apply bg-card max-w-2xl w-[90vw] max-h-[95vh] overflow-y-auto shadow-2xl mx-4 animate-in slide-in-from-bottom-4 zoom-in-95 duration-300;
+    @apply bg-card max-w-2xl w-[90vw] overflow-y-auto shadow-2xl mx-4 animate-in slide-in-from-bottom-4 zoom-in-95 duration-300;
+    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
   }
 
   .ingredient-item {
