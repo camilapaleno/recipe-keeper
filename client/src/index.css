@@ -379,6 +379,7 @@
   .modal-edit-form textarea {
     background-color: rgba(0, 0, 0, 0.05) !important;
     border-color: rgba(0, 0, 0, 0.15) !important;
+    font-family: var(--font-sans) !important;
   }
 
   .recipe-title {

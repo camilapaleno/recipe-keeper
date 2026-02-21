@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { X, Edit, Eye, Trash2, Save, Undo2 } from "lucide-react";
+import { X, Edit, Eye, Trash2, Save, Undo2, ExternalLink } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertRecipeSchema } from "@shared/schema";
@@ -318,7 +318,7 @@ export default function RecipeModal({
                   <Input
                     {...form.register("title")}
                     placeholder="Recipe title"
-                    className="text-2xl font-bold recipe-title flex-1"
+                    className="text-2xl font-bold flex-1 font-sans"
                     data-testid="input-recipe-title"
                   />
 
@@ -396,7 +396,7 @@ export default function RecipeModal({
                   data-testid="textarea-recipe-description"
                 />
               ) : (
-                <div className="text-muted-foreground" data-testid="text-recipe-description">
+                <div className="recipe-description" data-testid="text-recipe-description">
                   {recipe?.description || "No description"}
                 </div>
               )}
@@ -514,14 +514,15 @@ export default function RecipeModal({
                   />
                 ) : (
                   recipe?.link && (
-                    <div className="text-muted-foreground" data-testid="text-recipe-link">
+                    <div data-testid="text-recipe-link">
                       <a
                         href={recipe.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline break-all"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-black/15 bg-black/5 text-foreground text-sm hover:bg-black/10 transition-colors no-underline"
                       >
-                        {recipe.link}
+                        <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate max-w-xs">{recipe.link}</span>
                       </a>
                     </div>
                   )
