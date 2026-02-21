@@ -5,7 +5,7 @@ function generateUUID(): string {
   return 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 }
 
-const SEED_VERSION = "3";
+const SEED_VERSION = "4";
 
 // Default seed recipes synced from database
 const DEFAULT_RECIPES: Recipe[] = [
@@ -78,7 +78,7 @@ const DEFAULT_RECIPES: Recipe[] = [
       "1 tsp salt"
     ],
     directions: "Mix the lemon juice, vinegar, olive oil and salt for the dressing. I store it separately so the salad stays fresh longer.",
-    position: 1756369055,
+    position: 1756369388,
     stackId: null,
     color: "#fed07d",
     image: "https://www.fromachefskitchen.com/wp-content/uploads/2023/09/Black-Eyed-Pea-Salad.jpeg",
@@ -127,7 +127,7 @@ const DEFAULT_RECIPES: Recipe[] = [
       "1/4 cup parmesan cheese"
     ],
     directions: "Step 1- Cook tomato and aromatics. Add the garlic and onion to a large saucepan. Once soft, add the tomato paste and cook briefly. \nStep 2- Build the sauce. Add the cream and vodka and simmer until the alcohol evaporates. Add the seasonings, stir, and remove from the heat. \nStep 3- Cook the pasta. In a large pot, cook the pasta to al dente, strain, and reserve ¼ cup of the pasta water. \nStep 4- Combine. Fold in the butter and stir until it melts, then add the pasta, reserved pasta water, and parmesan. Once combined, serve with fresh herbs.",
-    position: 1756369388,
+    position: 1756369055,
     stackId: null,
     color: "#e7f19a",
     image: "https://thebigmansworld.com/wp-content/uploads/2024/11/gigi-hadid-pasta-recipe.jpg",
