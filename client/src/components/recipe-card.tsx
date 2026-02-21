@@ -198,8 +198,8 @@ export default function RecipeCard({ recipe, onClick, isDragDisabled, onDragStar
         {/* Recipe Image */}
         {recipe.image && (
           <div className="absolute bottom-3 right-3 w-1/2 aspect-square">
-            <img 
-              src={recipe.image} 
+            <img
+              src={recipe.image.startsWith('assets/') ? import.meta.env.BASE_URL + recipe.image : recipe.image}
               alt={recipe.title}
               className="w-full h-full object-cover shadow-md transform rotate-3"
               data-testid={`image-recipe-${recipe.id}`}

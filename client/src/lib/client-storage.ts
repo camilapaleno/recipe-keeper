@@ -5,14 +5,14 @@ function generateUUID(): string {
   return 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 }
 
-const SEED_VERSION = "7";
+const SEED_VERSION = "8";
 
 // Default seed recipes synced from database
 const DEFAULT_RECIPES: Recipe[] = [
   {
     id: "seed-1",
     title: "Lemon Orzo Salad",
-    description: "https://lemonsandzest.com/lemon-orzo-salad/",
+    description: "hard to stop eating",
     category: "A Classic",
     ingredients: [
       "2 c orzo, uncooked",
@@ -31,15 +31,15 @@ const DEFAULT_RECIPES: Recipe[] = [
     directions: "Chop everything super small\nDon't overcook orzo\nMake sure orzo is cooled before adding ingredients",
     position: 0,
     stackId: null,
-    color: "#e7f19a",
+    color: "#efe5b9",
     image: "",
-    link: null,
+    link: "https://lemonsandzest.com/lemon-orzo-salad/",
     linePattern: "horizontal",
   },
   {
     id: "seed-2",
     title: "Cowboy Caviar",
-    description: "https://www.allrecipes.com/ultimate-cowboy-caviar-recipe-8653312",
+    description: "fiber!",
     category: "Fiber",
     ingredients: [
       "2/3 cup finely diced red onion",
@@ -54,10 +54,10 @@ const DEFAULT_RECIPES: Recipe[] = [
     directions: "",
     position: 1756368896,
     stackId: null,
-    color: "#ffa57e",
+    color: "#efe5b9",
     image: "",
-    link: null,
-    linePattern: "horizontal",
+    link: "https://www.allrecipes.com/ultimate-cowboy-caviar-recipe-8653312",
+    linePattern: "horizontal-narrow",
   },
   {
     id: "seed-5",
@@ -81,14 +81,14 @@ const DEFAULT_RECIPES: Recipe[] = [
     position: 1756369388,
     stackId: null,
     color: "#e7f19a",
-    image: "https://www.fromachefskitchen.com/wp-content/uploads/2023/09/Black-Eyed-Pea-Salad.jpeg",
+    image: "assets/recipe-photos/bep.jpg",
     link: null,
     linePattern: "horizontal",
   },
   {
     id: "seed-4",
     title: "Harvest Bowl",
-    description: "So filling and healthy. Inspired by the harvest bowl at Sweetgreen.",
+    description: "inspired by the harvest bowl at Sweetgreen.",
     category: "Easy",
     ingredients: [
       "Broccoli",
@@ -105,13 +105,13 @@ const DEFAULT_RECIPES: Recipe[] = [
     stackId: null,
     color: "#fed07d",
     image: "",
-    link: null,
+    link: "",
     linePattern: "horizontal",
   },
   {
     id: "seed-3",
     title: "Gigi Pasta",
-    description: "https://thebigmansworld.com/gigi-hadid-pasta/",
+    description: "",
     category: "Pasta",
     ingredients: [
       "1/4 cup olive oil (this is too much oil)",
@@ -130,14 +130,14 @@ const DEFAULT_RECIPES: Recipe[] = [
     position: 1756369055,
     stackId: null,
     color: "#fed07d",
-    image: "https://thebigmansworld.com/wp-content/uploads/2024/11/gigi-hadid-pasta-recipe.jpg",
-    link: null,
-    linePattern: "horizontal",
+    image: "assets/recipe-photos/gigi.jpg",
+    link: "https://thebigmansworld.com/gigi-hadid-pasta/",
+    linePattern: "none",
   },
   {
     id: "seed-6",
     title: "Beef Udon Soup",
-    description: "https://www.justonecookbook.com/beef-udon/",
+    description: "",
     category: "",
     ingredients: [
       "2 cups dashi (2 cups water 1 tbsp dashi powder)",
@@ -157,7 +157,7 @@ const DEFAULT_RECIPES: Recipe[] = [
     stackId: null,
     color: "#ffa57e",
     image: "",
-    link: null,
+    link: "https://www.justonecookbook.com/beef-udon/",
     linePattern: "horizontal",
   },
 ];

@@ -67,13 +67,7 @@ export default function Home() {
           style={{ width: '100%', minWidth: '1280px', display: 'block', position: 'relative', left: '50%', transform: 'translateX(-50%)' }}
         />
       </div>
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: -2 }}>
-        <img
-          src={`${import.meta.env.BASE_URL}assets/recipe-grid.png`}
-          alt=""
-          style={{ width: '100%', minWidth: '1280px', display: 'block', position: 'relative', left: '50%', transform: 'translateX(-50%)' }}
-        />
-      </div>
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: -2, backgroundImage: `url(${import.meta.env.BASE_URL}assets/recipe-grid-2.jpg)`, backgroundRepeat: 'repeat', backgroundSize: 'contain' }} />
 
       {/* Header Section */}
       <header className="py-16 px-4">

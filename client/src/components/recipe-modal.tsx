@@ -497,7 +497,7 @@ export default function RecipeModal({
               ) : (
                 recipe?.image && (
                   <div className="w-32 h-32" data-testid="text-recipe-image">
-                    <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" />
+                    <img src={recipe.image.startsWith('assets/') ? import.meta.env.BASE_URL + recipe.image : recipe.image} alt={recipe.title} className="w-full h-full object-cover" />
                   </div>
                 )
               )}
@@ -514,15 +514,15 @@ export default function RecipeModal({
                   />
                 ) : (
                   recipe?.link && (
-                    <div data-testid="text-recipe-link">
+                    <div data-testid="text-recipe-link" className="w-full min-w-0">
                       <a
                         href={recipe.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-black/15 bg-black/5 text-foreground text-sm hover:bg-black/10 transition-colors no-underline"
+                        className="flex items-center gap-2 px-3 py-2 rounded-md border border-black/15 bg-black/5 text-foreground text-sm hover:bg-black/10 transition-colors no-underline min-w-0"
                       >
                         <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate max-w-xs">{recipe.link}</span>
+                        <span className="truncate min-w-0">{recipe.link}</span>
                       </a>
                     </div>
                   )
