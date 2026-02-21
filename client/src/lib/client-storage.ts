@@ -178,15 +178,11 @@ export class ClientStorage {
       return DEFAULT_RECIPES;
     }
 
-    // Sync seed recipes if version changed
+    // Full reset when version changes
     if (storedVersion !== SEED_VERSION) {
-      const recipes: Recipe[] = JSON.parse(stored);
-      const seedIds = new Set(DEFAULT_RECIPES.map(r => r.id));
-      const userRecipes = recipes.filter(r => !seedIds.has(r.id));
-      const merged = [...DEFAULT_RECIPES, ...userRecipes];
-      this.setStoredRecipes(merged);
+      this.setStoredRecipes(DEFAULT_RECIPES);
       localStorage.setItem(this.seedVersionKey, SEED_VERSION);
-      return merged;
+      return DEFAULT_RECIPES;
     }
 
     return JSON.parse(stored);
