@@ -5,7 +5,7 @@ function generateUUID(): string {
   return 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 }
 
-const SEED_VERSION = "2";
+const SEED_VERSION = "3";
 
 // Default seed recipes synced from database
 const DEFAULT_RECIPES: Recipe[] = [
