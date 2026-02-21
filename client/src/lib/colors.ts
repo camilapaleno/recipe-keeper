@@ -1,8 +1,8 @@
 export const RECIPE_COLORS = [
   '#fed07d', // Light orange
-  '#ffa57e', // Peach
-  '#be9efc', // Light purple
-  '#03d9fe', // Light blue
+  '#abd6e8', // Light blue
+  '#efe5b9', // Light yellow
+  '#f4f5f6', // White
   '#e7f19a', // Light green
 ] as const;
 

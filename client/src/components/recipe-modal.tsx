@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { X, Edit, Eye, Trash2 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { X, Edit, Eye, Trash2, Save, Undo2 } from "lucide-react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertRecipeSchema } from "@shared/schema";
 import { useRecipes } from "@/hooks/use-recipes";
@@ -13,6 +13,14 @@ import { useToast } from "@/hooks/use-toast";
 import type { Recipe } from "@shared/schema";
 import { z } from "zod";
 import { getNextColor, RECIPE_COLORS } from "@/lib/colors";
+import { getColorFromRecipe } from "@/lib/colors";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface RecipeModalProps {
   recipe: Recipe | null;
@@ -29,6 +37,20 @@ const recipeFormSchema = insertRecipeSchema.extend({
 
 type RecipeFormData = z.infer<typeof recipeFormSchema>;
 
+function PatternPreview({ pattern }: { pattern: string }) {
+  return (
+    <div className="absolute inset-0">
+      {(pattern === "horizontal" ? [1,2,3] : pattern === "horizontal-narrow" ? [1,2,3,4,5] : []).map((_, i, arr) => (
+        <div key={i} className="absolute w-full bg-blue-400 opacity-50" style={{ height: '1px', top: `${((i + 1) * 100) / (arr.length + 1)}%` }} />
+      ))}
+      {pattern === "grid" && <>
+        {[1,2,3].map((_, i) => <div key={`h${i}`} className="absolute w-full bg-blue-400 opacity-50" style={{ height: '1px', top: `${((i + 1) * 100) / 4}%` }} />)}
+        {[1,2,3].map((_, i) => <div key={`v${i}`} className="absolute h-full bg-blue-400 opacity-50" style={{ width: '1px', left: `${((i + 1) * 100) / 4}%` }} />)}
+      </>}
+    </div>
+  );
+}
+
 export default function RecipeModal({
   recipe,
   isOpen,
@@ -37,6 +59,17 @@ export default function RecipeModal({
   onEditModeChange,
 }: RecipeModalProps) {
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
+  const [colorDropdownOpen, setColorDropdownOpen] = useState(false);
+  const [patternDropdownOpen, setPatternDropdownOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageFile = (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => form.setValue("image", e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
   const { updateRecipe, deleteRecipe, createRecipe, data: allRecipes = [] } = useRecipes();
   const { toast } = useToast();
 
@@ -51,7 +84,9 @@ export default function RecipeModal({
       position: Math.floor(Date.now() / 1000),
       stackId: null,
       image: "",
+      link: "",
       color: getNextColor(allRecipes),
+      linePattern: "horizontal",
     },
   });
 
@@ -66,7 +101,9 @@ export default function RecipeModal({
         position: recipe.position,
         stackId: recipe.stackId,
         image: recipe.image || "",
+        link: recipe.link || "",
         color: recipe.color || getNextColor(allRecipes),
+        linePattern: recipe.linePattern || "horizontal",
       });
       setCheckedIngredients(new Set());
     } else {
@@ -79,7 +116,9 @@ export default function RecipeModal({
         position: Math.floor(Date.now() / 1000),
         stackId: null,
         image: "",
+        link: "",
         color: getNextColor(allRecipes),
+        linePattern: "horizontal",
       });
     }
   }, [recipe, form]);
@@ -146,37 +185,196 @@ export default function RecipeModal({
 
   if (!isOpen) return null;
 
+  const currentColor = form.watch("color");
+  const currentPattern = form.watch("linePattern");
+  const backgroundColor = recipe ? getColorFromRecipe(recipe, 0) : currentColor;
+
+  const renderLinePattern = () => {
+    const pattern = recipe?.linePattern || currentPattern || "horizontal";
+
+    switch (pattern) {
+      case "horizontal":
+        return (
+          <div className="absolute inset-0 pointer-events-none">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-full h-[0.5px] bg-blue-600 bg-opacity-25"
+                style={{ top: `${((i + 1) * 100) / 7}%` }}
+              />
+            ))}
+          </div>
+        );
+      case "horizontal-narrow":
+        return (
+          <div className="absolute inset-0 pointer-events-none">
+            {[...Array(12)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-full h-[0.5px] bg-blue-600 bg-opacity-25"
+                style={{ top: `${((i + 1) * 100) / 13}%` }}
+              />
+            ))}
+          </div>
+        );
+      case "grid":
+        return (
+          <div className="absolute inset-0 pointer-events-none">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={`h-${i}`}
+                className="absolute w-full h-[0.5px] bg-blue-600 bg-opacity-25"
+                style={{ top: `${((i + 1) * 100) / 7}%` }}
+              />
+            ))}
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={`v-${i}`}
+                className="absolute h-full w-[0.5px] bg-blue-600 bg-opacity-25"
+                style={{ left: `${((i + 1) * 100) / 7}%` }}
+              />
+            ))}
+          </div>
+        );
+      case "none":
+        return null;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="overlay" onClick={onClose} data-testid="modal-recipe-overlay">
-      <div className="full-card" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6">
-          {/* Modal Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-foreground" data-testid="text-modal-title">
-              {isEditMode ? (recipe ? 'Edit Recipe' : 'New Recipe') : (recipe?.title || 'Recipe')}
-            </h2>
-            <div className="flex gap-2">
+      <div
+        className="full-card relative"
+        onClick={(e) => e.stopPropagation()}
+        style={{ backgroundColor }}
+      >
+        {renderLinePattern()}
+        <div className="p-6 relative z-10">
+          <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6 modal-edit-form">
+            {/* Title with Color, Pattern, Edit/View, and Close on same line */}
+            <div className="flex items-center gap-3">
+              {isEditMode ? (
+                <>
+                  {/* Color Dropdown */}
+                  <div className="relative self-stretch flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setColorDropdownOpen(!colorDropdownOpen)}
+                      className="w-9 h-full rounded-full border border-black/15 hover:bg-accent transition-all"
+                      style={{ backgroundColor: form.watch("color") }}
+                      data-testid="select-color-trigger"
+                    />
+                    {colorDropdownOpen && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-black/15 rounded-md shadow-lg z-[2000] p-2">
+                        <div className="flex flex-col gap-1">
+                          {RECIPE_COLORS.map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              onClick={() => {
+                                form.setValue("color", color);
+                                setColorDropdownOpen(false);
+                              }}
+                              className="w-6 h-6 rounded-full border border-black/15 hover:bg-accent"
+                              style={{ backgroundColor: color }}
+                              data-testid={`select-color-${color}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pattern Dropdown */}
+                  <div className="relative self-stretch flex items-center">
+                    <button
+                      type="button"
+                      onClick={() => setPatternDropdownOpen(!patternDropdownOpen)}
+                      className="w-9 h-full border rounded-full border-black/15 hover:bg-accent transition-all relative overflow-hidden bg-transparent"
+                      data-testid="select-pattern-trigger"
+                    >
+                      <PatternPreview pattern={form.watch("linePattern") || "none"} />
+                    </button>
+                    {patternDropdownOpen && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-black/15 rounded-md shadow-lg z-[2000] p-2">
+                        <div className="flex flex-col gap-1">
+                          {["horizontal", "horizontal-narrow", "grid", "none"].map((p) => (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => { form.setValue("linePattern", p); setPatternDropdownOpen(false); }}
+                              className="w-6 h-6 border border-black/15 hover:bg-accent relative overflow-hidden bg-transparent"
+                            >
+                              <PatternPreview pattern={p} />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <Input
+                    {...form.register("title")}
+                    placeholder="Recipe title"
+                    className="text-2xl font-bold recipe-title flex-1"
+                    data-testid="input-recipe-title"
+                  />
+
+                  {/* Hidden Category Field */}
+                  <Input
+                    {...form.register("category")}
+                    type="hidden"
+                  />
+                </>
+              ) : (
+                <h2 className="text-2xl font-bold text-foreground recipe-title flex-1" data-testid="text-recipe-title">
+                  {recipe?.title || "Untitled Recipe"}
+                </h2>
+              )}
+
+              {/* Edit/Save/Cancel and Close buttons */}
               {recipe && !isEditMode && (
                 <Button
-                  variant="secondary"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => onEditModeChange(true)}
                   data-testid="button-edit-recipe"
                 >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit
+                  <Edit className="w-4 h-4" />
                 </Button>
               )}
-              {isEditMode && recipe && (
+              {isEditMode && (
+                <>
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    size="icon"
+                    disabled={createRecipe.isPending || updateRecipe.isPending}
+                    data-testid="button-save-recipe"
+                  >
+                    <Save className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (recipe) {
+                        onEditModeChange(false);
+                      } else {
+                        onClose();
+                      }
+                    }}
+                    data-testid="button-cancel-edit"
+                  >
+                    <Undo2 className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+              {recipe && !isEditMode && (
                 <Button
-                  variant="secondary"
-                  onClick={() => onEditModeChange(false)}
-                  data-testid="button-view-recipe"
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  View
-                </Button>
-              )}
-              <Button
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
@@ -184,80 +382,44 @@ export default function RecipeModal({
               >
                 <X className="w-4 h-4" />
               </Button>
-            </div>
-          </div>
-
-          <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
-            {/* Title */}
-            <div>
-              <Label htmlFor="title" className="text-lg font-semibold">Title</Label>
-              {isEditMode ? (
-                <Input
-                  {...form.register("title")}
-                  placeholder="Recipe title"
-                  className="mt-2"
-                  data-testid="input-recipe-title"
-                />
-              ) : (
-                <div className="mt-2 text-foreground" data-testid="text-recipe-title">
-                  {recipe?.title || "Untitled Recipe"}
-                </div>
-              )}
-            </div>
-
-            {/* Category */}
-            <div>
-              <Label htmlFor="category" className="text-lg font-semibold">Category</Label>
-              {isEditMode ? (
-                <Input
-                  {...form.register("category")}
-                  placeholder="e.g., Dessert, Main Course, etc."
-                  className="mt-2"
-                  data-testid="input-recipe-category"
-                />
-              ) : (
-                <div className="mt-2 text-muted-foreground" data-testid="text-recipe-category">
-                  {recipe?.category || "No category"}
-                </div>
               )}
             </div>
 
             {/* Description */}
+            {(isEditMode || recipe?.description) && (
             <div>
-              <Label htmlFor="description" className="text-lg font-semibold">Description</Label>
               {isEditMode ? (
                 <Textarea
                   {...form.register("description")}
                   placeholder="Brief description of the recipe"
-                  className="mt-2"
                   rows={3}
                   data-testid="textarea-recipe-description"
                 />
               ) : (
-                <div className="mt-2 text-muted-foreground" data-testid="text-recipe-description">
+                <div className="text-muted-foreground" data-testid="text-recipe-description">
                   {recipe?.description || "No description"}
                 </div>
               )}
             </div>
+            )}
 
             {/* Ingredients */}
             <div>
-              <Label className="text-lg font-semibold">Ingredients</Label>
               {isEditMode ? (
                 <Textarea
                   {...form.register("ingredientsText")}
-                  placeholder="Enter ingredients, one per line"
-                  className="mt-2"
+                  placeholder="Ingredients (one per line)"
                   rows={8}
                   data-testid="textarea-recipe-ingredients"
                 />
               ) : (
-                <div className="mt-3 space-y-2" data-testid="list-recipe-ingredients">
+                <div className="space-y-2" data-testid="list-recipe-ingredients">
                   {recipe?.ingredients?.map((ingredient, index) => (
                     <div key={index} className="ingredient-item">
                       <Checkbox
                         checked={checkedIngredients.has(index)}
                         onCheckedChange={() => toggleIngredientCheck(index)}
+                        className="w-6 h-6 cursor-pointer"
                         data-testid={`checkbox-ingredient-${index}`}
                       />
                       <span
@@ -273,106 +435,113 @@ export default function RecipeModal({
             </div>
 
             {/* Directions */}
+            {(isEditMode || recipe?.directions
+            ) && (
             <div>
-              <Label htmlFor="directions" className="text-lg font-semibold">Directions</Label>
               {isEditMode ? (
                 <Textarea
                   {...form.register("directions")}
-                  placeholder="Enter cooking directions"
-                  className="mt-2"
+                  placeholder="Directions"
                   rows={10}
                   data-testid="textarea-recipe-directions"
                 />
               ) : (
-                <div className="mt-2 text-muted-foreground leading-relaxed whitespace-pre-line" data-testid="text-recipe-directions">
+                <div className="leading-relaxed whitespace-pre-line" data-testid="text-recipe-directions">
                   {recipe?.directions || "No directions provided"}
                 </div>
               )}
             </div>
-
-            {/* Color */}
-            <div>
-              <Label className="text-lg font-semibold">Color</Label>
-              {isEditMode ? (
-                <div className="mt-3 flex gap-3">
-                  {RECIPE_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => form.setValue("color", color)}
-                      className={`w-8 h-8 rounded-full border-2 transition-all ${
-                        form.watch("color") === color 
-                          ? "border-gray-800 ring-2 ring-gray-400" 
-                          : "border-gray-300 hover:border-gray-500"
-                      }`}
-                      style={{ backgroundColor: color }}
-                      data-testid={`color-picker-${color}`}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-3">
-                  <div
-                    className="w-8 h-8 rounded-full border-2 border-gray-300"
-                    style={{ backgroundColor: recipe?.color || getNextColor(allRecipes) }}
-                    data-testid="recipe-color-display"
-                  />
-                </div>
-              )}
-            </div>
+            )}
 
             {/* Image */}
             <div>
-              <Label htmlFor="image" className="text-lg font-semibold">Image (optional)</Label>
               {isEditMode ? (
-                <Input
-                  {...form.register("image")}
-                  placeholder="Image URL"
-                  className="mt-2"
-                  data-testid="input-recipe-image"
-                />
-              ) : (
-                <div className="mt-2 text-muted-foreground" data-testid="text-recipe-image">
-                  {recipe?.image ? (
-                    <img src={recipe.image} alt={recipe.title} className="max-w-xs rounded-md" />
+                <div className="w-32 h-32">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files?.[0] && handleImageFile(e.target.files[0])}
+                  />
+                  {form.watch("image") ? (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={form.watch("image") ?? undefined}
+                        alt="recipe"
+                        className="w-full h-full object-cover cursor-pointer"
+                        onClick={() => fileInputRef.current?.click()}
+                        data-testid="input-recipe-image"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => form.setValue("image", "")}
+                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-black/70"
+                      >
+                        ×
+                      </button>
+                    </div>
                   ) : (
-                    "No image"
+                    <div
+                      className={`w-full h-full border-2 border-dashed rounded flex flex-col items-center justify-center cursor-pointer text-xs text-muted-foreground gap-1 transition-colors ${isDragOver ? 'border-primary bg-primary/5' : 'border-black/15 hover:border-black/30'}`}
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                      onDragLeave={() => setIsDragOver(false)}
+                      onDrop={(e) => { e.preventDefault(); setIsDragOver(false); e.dataTransfer.files[0] && handleImageFile(e.dataTransfer.files[0]); }}
+                      data-testid="input-recipe-image"
+                    >
+                      <span>drop image</span>
+                    </div>
                   )}
                 </div>
+              ) : (
+                recipe?.image && (
+                  <div className="w-32 h-32" data-testid="text-recipe-image">
+                    <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" />
+                  </div>
+                )
               )}
             </div>
 
-            {/* Save/Cancel Buttons (shown in edit mode) */}
-            {isEditMode && (
-              <div className="flex gap-3 pt-4 border-t border-border">
-                <Button
-                  type="submit"
-                  disabled={createRecipe.isPending || updateRecipe.isPending}
-                  data-testid="button-save-recipe"
-                >
-                  {createRecipe.isPending || updateRecipe.isPending ? "Saving..." : "Save Changes"}
-                </Button>
+            {/* Recipe Link */}
+            {(isEditMode || recipe?.link) && (
+              <div>
+                {isEditMode ? (
+                  <Input
+                    {...form.register("link")}
+                    placeholder="Recipe link (optional)"
+                    data-testid="input-recipe-link"
+                  />
+                ) : (
+                  recipe?.link && (
+                    <div className="text-muted-foreground" data-testid="text-recipe-link">
+                      <a
+                        href={recipe.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline break-all"
+                      >
+                        {recipe.link}
+                      </a>
+                    </div>
+                  )
+                )}
+              </div>
+            )}
+
+            {/* Delete Button (shown in edit mode) */}
+            {isEditMode && recipe && (
+              <div className="flex gap-3 pt-4 border-t border-black/15">
                 <Button
                   type="button"
-                  variant="secondary"
-                  onClick={() => onEditModeChange(false)}
-                  data-testid="button-cancel-edit"
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={deleteRecipe.isPending}
+                  data-testid="button-delete-recipe"
                 >
-                  Cancel
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {deleteRecipe.isPending ? "Deleting..." : "Delete"}
                 </Button>
-                {recipe && (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={handleDelete}
-                    className="ml-auto"
-                    disabled={deleteRecipe.isPending}
-                    data-testid="button-delete-recipe"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {deleteRecipe.isPending ? "Deleting..." : "Delete"}
-                  </Button>
-                )}
               </div>
             )}
           </form>

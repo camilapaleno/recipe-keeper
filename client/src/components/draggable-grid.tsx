@@ -361,14 +361,14 @@ export default function DraggableGrid({
             const isDragging = dragItem?.item.id === item.id;
             
             return (
-              <div key={item.id} className="relative">
+              <div key={item.id} className={`relative ${item.type === 'recipe' ? 'grid-recipe-item' : ''}`}>
                 {/* Drop line indicator - centered between cards */}
                 {dragOverIndex === index && dragItem && !isDragging && (
                   <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-0.5 h-16 bg-primary rounded-full z-20 pointer-events-none" />
                 )}
                 
-                <div 
-                  className={`relative ${
+                <div
+                  className={`relative h-full ${
                     isDragging ? 'opacity-50 scale-95' : ''
                   } ${isReordering ? 'pointer-events-none' : ''}`}
                   draggable={!isReordering}

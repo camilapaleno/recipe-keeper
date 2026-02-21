@@ -51,29 +51,57 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative isolate">
+      {/* Background images - sit behind all content */}
+      <div className="absolute top-0 left-0 right-0 overflow-hidden pointer-events-none" style={{ zIndex: -1 }}>
+        <img
+          src={`${import.meta.env.BASE_URL}assets/recipe-top.png`}
+          alt=""
+          style={{ width: '100%', minWidth: '1280px', display: 'block', position: 'relative', left: '50%', transform: 'translateX(-50%)' }}
+        />
+      </div>
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: -2 }}>
+        <img
+          src={`${import.meta.env.BASE_URL}assets/recipe-grid.png`}
+          alt=""
+          style={{ width: '100%', minWidth: '1280px', display: 'block', position: 'relative', left: '50%', transform: 'translateX(-50%)' }}
+        />
+      </div>
+
       {/* Header Section */}
       <header className="py-16 px-4">
-        <div className="text-center max-w-4xl mx-auto">
-          <div className="mb-8">
+        <div className="text-center max-w-2xl mx-auto">
+          {/* <div className="mb-8">
             <Bean className="w-12 h-12 mx-auto mb-6 text-foreground" />
-          </div>
-          <h1 className="text-2xl font-normal text-foreground mb-4" data-testid="title-recipe-keeper">
-            recipe keeper
-          </h1>
-          <p className="text-muted-foreground mb-8 text-sm">
-            add your recipes here to find them more easily
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button
-              onClick={handleNewRecipe}
-              variant="outline"
-              className="gap-2 px-2 py-2 rounded-lg text-sm font-medium transition-all border bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200"
-              data-testid="button-new-recipe"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              add another recipe
-            </Button>
+          </div> */}
+          <div className="relative">
+            <img
+              src={`${import.meta.env.BASE_URL}assets/recipe-title-accent.png`}
+              alt=""
+              className="w-full pointer-events-none"
+            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+              <h1
+                className="text-7xl font-normal text-foreground"
+                data-testid="title-recipe-keeper"
+                style={{
+                  fontFamily: "'Times New Roman Condensed', serif",
+                  WebkitTextStroke: '15px white',
+                  paintOrder: 'stroke fill',
+                }}
+              >
+                recipe<br />collection
+              </h1>
+              <Button
+                onClick={handleNewRecipe}
+                variant="outline"
+                className="gap-2 px-2 py-2 rounded-lg text-sm font-medium transition-all border bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200"
+                data-testid="button-new-recipe"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                add another recipe
+              </Button>
+            </div>
           </div>
         </div>
       </header>

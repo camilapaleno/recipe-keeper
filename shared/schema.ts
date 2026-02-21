@@ -14,6 +14,8 @@ export const recipes = sqliteTable("recipes", {
   stackId: text("stack_id"),
   color: text("color").notNull().default("#fed07d"),
   image: text("image"),
+  link: text("link"),
+  linePattern: text("line_pattern").notNull().default("horizontal"),
 });
 
 export const stacks = sqliteTable("stacks", {

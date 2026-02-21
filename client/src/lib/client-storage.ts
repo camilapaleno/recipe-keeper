@@ -5,7 +5,9 @@ function generateUUID(): string {
   return 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 }
 
-// Default seed recipes that will be available for all new users
+const SEED_VERSION = "2";
+
+// Default seed recipes synced from database
 const DEFAULT_RECIPES: Recipe[] = [
   {
     id: "seed-1",
@@ -30,7 +32,9 @@ const DEFAULT_RECIPES: Recipe[] = [
     position: 0,
     stackId: null,
     color: "#e7f19a",
-    image: ""
+    image: "",
+    link: null,
+    linePattern: "horizontal",
   },
   {
     id: "seed-2",
@@ -48,58 +52,15 @@ const DEFAULT_RECIPES: Recipe[] = [
       "1 lime"
     ],
     directions: "",
-    position: 1,
+    position: 1756368896,
     stackId: null,
     color: "#ffa57e",
-    image: ""
+    image: "",
+    link: null,
+    linePattern: "horizontal",
   },
   {
     id: "seed-3",
-    title: "Gigi Pasta",
-    description: "https://thebigmansworld.com/gigi-hadid-pasta/",
-    category: "Pasta",
-    ingredients: [
-      "1/4 cup olive oil (this is too much oil)",
-      "1 small red onion chopped",
-      "1 clove garlic minced",
-      "1/4 cup tomato paste",
-      "1/2 cup heavy cream",
-      "1 teaspoon red pepper flakes",
-      "1 teaspoon salt",
-      "1/2 teaspoon black pepper",
-      "8 1/2 ounces shell pasta uncooked",
-      "1 tablespoon butter",
-      "1/4 cup parmesan cheese"
-    ],
-    directions: "Step 1- Cook tomato and aromatics. Add the garlic and onion to a large saucepan. Once soft, add the tomato paste and cook briefly. \nStep 2- Build the sauce. Add the cream and vodka and simmer until the alcohol evaporates. Add the seasonings, stir, and remove from the heat. \nStep 3- Cook the pasta. In a large pot, cook the pasta to al dente, strain, and reserve ¼ cup of the pasta water. \nStep 4- Combine. Fold in the butter and stir until it melts, then add the pasta, reserved pasta water, and parmesan. Once combined, serve with fresh herbs.",
-    position: 2,
-    stackId: null,
-    color: "#e7f19a",
-    image: "https://thebigmansworld.com/wp-content/uploads/2024/11/gigi-hadid-pasta-recipe.jpg"
-  },
-  {
-    id: "seed-4",
-    title: "Harvest Bowl",
-    description: "So filling and healthy. Inspired by the harvest bowl at Sweetgreen.",
-    category: "Easy",
-    ingredients: [
-      "Broccoli",
-      "Carrots",
-      "Feta",
-      "Sweet potato",
-      "Lemon",
-      "Grain (Rice OK)",
-      "Kale/Arugula",
-      "Chicken"
-    ],
-    directions: "Put veggies in oven all together to crisp em up\nCook chicken in pan",
-    position: 3,
-    stackId: null,
-    color: "#fed07d",
-    image: ""
-  },
-  {
-    id: "seed-5",
     title: "Black-Eyed Pea Salad",
     description: "Ate this every morning at the hostel in Kas, Turkey",
     category: "Turkish",
@@ -117,10 +78,61 @@ const DEFAULT_RECIPES: Recipe[] = [
       "1 tsp salt"
     ],
     directions: "Mix the lemon juice, vinegar, olive oil and salt for the dressing. I store it separately so the salad stays fresh longer.",
-    position: 4,
+    position: 1756369055,
     stackId: null,
     color: "#fed07d",
-    image: "https://www.fromachefskitchen.com/wp-content/uploads/2023/09/Black-Eyed-Pea-Salad.jpeg"
+    image: "https://www.fromachefskitchen.com/wp-content/uploads/2023/09/Black-Eyed-Pea-Salad.jpeg",
+    link: null,
+    linePattern: "horizontal",
+  },
+  {
+    id: "seed-4",
+    title: "Harvest Bowl",
+    description: "So filling and healthy. Inspired by the harvest bowl at Sweetgreen.",
+    category: "Easy",
+    ingredients: [
+      "Broccoli",
+      "Carrots",
+      "Feta",
+      "Sweet potato",
+      "Lemon",
+      "Grain (Rice OK)",
+      "Kale/Arugula",
+      "Chicken"
+    ],
+    directions: "Put veggies in oven all together to crisp em up\nCook chicken in pan",
+    position: 1756369215,
+    stackId: null,
+    color: "#fed07d",
+    image: "",
+    link: null,
+    linePattern: "horizontal",
+  },
+  {
+    id: "seed-5",
+    title: "Gigi Pasta",
+    description: "https://thebigmansworld.com/gigi-hadid-pasta/",
+    category: "Pasta",
+    ingredients: [
+      "1/4 cup olive oil (this is too much oil)",
+      "1 small red onion chopped",
+      "1 clove garlic minced",
+      "1/4 cup tomato paste",
+      "1/2 cup heavy cream",
+      "1 teaspoon red pepper flakes",
+      "1 teaspoon salt",
+      "1/2 teaspoon black pepper",
+      "8 1/2 ounces shell pasta uncooked",
+      "1 tablespoon butter",
+      "1/4 cup parmesan cheese"
+    ],
+    directions: "Step 1- Cook tomato and aromatics. Add the garlic and onion to a large saucepan. Once soft, add the tomato paste and cook briefly. \nStep 2- Build the sauce. Add the cream and vodka and simmer until the alcohol evaporates. Add the seasonings, stir, and remove from the heat. \nStep 3- Cook the pasta. In a large pot, cook the pasta to al dente, strain, and reserve ¼ cup of the pasta water. \nStep 4- Combine. Fold in the butter and stir until it melts, then add the pasta, reserved pasta water, and parmesan. Once combined, serve with fresh herbs.",
+    position: 1756369388,
+    stackId: null,
+    color: "#e7f19a",
+    image: "https://thebigmansworld.com/wp-content/uploads/2024/11/gigi-hadid-pasta-recipe.jpg",
+    link: null,
+    linePattern: "horizontal",
   },
   {
     id: "seed-6",
@@ -141,26 +153,43 @@ const DEFAULT_RECIPES: Recipe[] = [
       "2 servings udon noodles (1.1 lb/500 g frozen or parboiled udon noodles; 6.3 oz/180 g dry udon noodles)"
     ],
     directions: "",
-    position: 5,
+    position: 1756369562,
     stackId: null,
     color: "#ffa57e",
-    image: ""
-  }
+    image: "",
+    link: null,
+    linePattern: "horizontal",
+  },
 ];
 
 export class ClientStorage {
   private recipesKey = 'recipestack-recipes';
   private stacksKey = 'recipestack-stacks';
+  private seedVersionKey = 'recipestack-seed-version';
 
   private getStoredRecipes(): Recipe[] {
     const stored = localStorage.getItem(this.recipesKey);
-    if (stored) {
-      return JSON.parse(stored);
+    const storedVersion = localStorage.getItem(this.seedVersionKey);
+
+    if (!stored) {
+      // First time user
+      this.setStoredRecipes(DEFAULT_RECIPES);
+      localStorage.setItem(this.seedVersionKey, SEED_VERSION);
+      return DEFAULT_RECIPES;
     }
-    
-    // First time user - initialize with default recipes
-    this.setStoredRecipes(DEFAULT_RECIPES);
-    return DEFAULT_RECIPES;
+
+    // Sync seed recipes if version changed
+    if (storedVersion !== SEED_VERSION) {
+      const recipes: Recipe[] = JSON.parse(stored);
+      const seedIds = new Set(DEFAULT_RECIPES.map(r => r.id));
+      const userRecipes = recipes.filter(r => !seedIds.has(r.id));
+      const merged = [...DEFAULT_RECIPES, ...userRecipes];
+      this.setStoredRecipes(merged);
+      localStorage.setItem(this.seedVersionKey, SEED_VERSION);
+      return merged;
+    }
+
+    return JSON.parse(stored);
   }
 
   private setStoredRecipes(recipes: Recipe[]): void {
