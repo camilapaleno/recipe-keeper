@@ -1,13 +1,9 @@
-import { GripVertical } from "lucide-react";
-import type { Recipe } from "@shared/schema";
+import { getRecipeImageUrl, type Recipe } from "@/lib/recipes";
 import { getColorFromRecipe } from "@/lib/colors";
 
 interface RecipeCardProps {
   recipe: Recipe;
   onClick: (recipe: Recipe) => void;
-  isDragDisabled?: boolean;
-  onDragStart?: (event: React.DragEvent) => void;
-  onDragEnd?: () => void;
 }
 
 // Generate a consistent random rotation based on recipe ID
@@ -49,28 +45,11 @@ function getOffsetsFromId(id: string): { x: number; y: number } {
   return { x, y };
 }
 
-export default function RecipeCard({ recipe, onClick, isDragDisabled, onDragStart, onDragEnd }: RecipeCardProps) {
+export default function RecipeCard({ recipe, onClick }: RecipeCardProps) {
   const backgroundColor = getColorFromRecipe(recipe, 0);
   const rotation = getRotationFromId(recipe.id);
   const offsets = getOffsetsFromId(recipe.id);
   
-  const handleDragClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent opening the recipe when dragging
-  };
-
-  const handleDragStart = (e: React.DragEvent) => {
-    e.stopPropagation();
-    if (onDragStart) {
-      onDragStart(e);
-    }
-  };
-
-  const handleDragEnd = () => {
-    if (onDragEnd) {
-      onDragEnd();
-    }
-  };
-
   const renderLinePattern = () => {
     const pattern = recipe.linePattern || "horizontal";
 
@@ -167,18 +146,6 @@ export default function RecipeCard({ recipe, onClick, isDragDisabled, onDragStar
       {renderLinePattern()}
 
       <div className="p-4 h-full flex flex-col relative z-10">
-        {!isDragDisabled && (
-          <div 
-            className="drag-handle" 
-            data-testid={`drag-handle-${recipe.id}`}
-            onClick={handleDragClick}
-            draggable={true}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <GripVertical className="w-4 h-4" />
-          </div>
-        )}
         <h3 className="recipe-title font-semibold text-3xl mb-2 line-clamp-2 lowercase opacity-60" data-testid={`text-recipe-title-${recipe.id}`}>
           {recipe.title}
         </h3>
@@ -199,7 +166,7 @@ export default function RecipeCard({ recipe, onClick, isDragDisabled, onDragStar
         {recipe.image && (
           <div className="absolute bottom-3 right-3 w-1/2 aspect-square">
             <img
-              src={recipe.image.startsWith('assets/') ? import.meta.env.BASE_URL + recipe.image : recipe.image}
+              src={getRecipeImageUrl(recipe.image)}
               alt={recipe.title}
               className="w-full h-full object-cover shadow-md transform rotate-3"
               data-testid={`image-recipe-${recipe.id}`}
